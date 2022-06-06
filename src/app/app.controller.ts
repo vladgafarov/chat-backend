@@ -5,8 +5,10 @@ import {
    HttpCode,
    Post,
    Request,
+   Res,
    UseGuards,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthService } from 'src/auth/auth.service';
 import { LoginDto } from 'src/auth/dto/login.dto';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
@@ -23,8 +25,20 @@ export class AppController {
 
    @Post('login')
    @HttpCode(200)
-   login(@Body() dto: LoginDto) {
-      return this.authService.login(dto);
+   async login(
+      @Body() dto: LoginDto,
+      @Res({ passthrough: true }) res: Response,
+   ) {
+      const data = await this.authService.login(dto);
+
+      res.cookie('access_token', data.access_token, {
+         httpOnly: true,
+      });
+      res.cookie('refresh_token', data.refresh_token, {
+         httpOnly: true,
+      });
+
+      return data;
    }
 
    @UseGuards(JwtAuthGuard)
