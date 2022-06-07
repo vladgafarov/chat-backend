@@ -38,14 +38,18 @@ export class RoomService {
    }
 
    async deleteOne(roomId: number) {
-      const room = await this.prismaService.room.delete({
-         where: { id: roomId },
-      });
+      try {
+         const room = await this.prismaService.room.delete({
+            where: { id: roomId },
+         });
 
-      if (!room) {
+         if (!room) {
+            throw new NotFoundException(NOT_FOUND);
+         }
+
+         return room;
+      } catch (error) {
          throw new NotFoundException(NOT_FOUND);
       }
-
-      return room;
    }
 }
