@@ -52,8 +52,22 @@ export class RoomService {
       }
    }
 
-   async deleteOne(roomId: number) {
+   async deleteOne(roomId: number, userId: number) {
       try {
+         const rooms = await this.prismaService.room.findMany({
+            where: { users: { some: { id: userId } } },
+            select: {
+               id: true,
+            },
+         });
+         const roomsIds = rooms.reduce((acc, curr) => {
+            return [...acc, curr.id];
+         }, []);
+
+         if (!roomsIds.includes(roomId)) {
+            throw new NotFoundException(NOT_FOUND);
+         }
+
          const room = await this.prismaService.room.delete({
             where: { id: roomId },
          });
