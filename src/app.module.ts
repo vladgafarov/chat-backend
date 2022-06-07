@@ -4,6 +4,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
+import { RoomModule } from './room/room.module';
 
 @Module({
    imports: [
@@ -13,6 +14,7 @@ import { AppController } from './app.controller';
       ConfigModule.forRoot({
          isGlobal: true,
       }),
+      RoomModule,
    ],
    controllers: [AppController],
 })
