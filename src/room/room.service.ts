@@ -1,13 +1,24 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { User } from '@prisma/client';
+import {
+   BadRequestException,
+   Injectable,
+   NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
-import { NOT_FOUND } from './room.constants';
+import {
+   INVALID_INVITED_USERS,
+   NOT_FOUND,
+   USER_CANNOT_CHAT_HIMSELF,
+} from './room.constants';
 
 @Injectable()
 export class RoomService {
    constructor(private readonly prismaService: PrismaService) {}
 
-   async createOne(userId: number, invitedUsers: Pick<User, 'id'>[]) {
+   async createOne(userId: number, invitedUsers: number[]) {
+      if (invitedUsers.includes(userId)) {
+         throw new BadRequestException(USER_CANNOT_CHAT_HIMSELF);
+      }
+
       const parsedInvitedUsers: Array<{ id: number }> = invitedUsers.reduce(
          (acc, curr) => {
             return [...acc, { id: curr }];
@@ -15,26 +26,30 @@ export class RoomService {
          [],
       );
 
-      const room = await this.prismaService.room.create({
-         data: {
-            users: {
-               connect: [{ id: userId }, ...parsedInvitedUsers],
-            },
-         },
-         include: {
-            users: {
-               select: {
-                  id: true,
-                  avatarUrl: true,
-                  email: true,
-                  name: true,
-                  online: true,
+      try {
+         const room = await this.prismaService.room.create({
+            data: {
+               users: {
+                  connect: [{ id: userId }, ...parsedInvitedUsers],
                },
             },
-         },
-      });
+            include: {
+               users: {
+                  select: {
+                     id: true,
+                     avatarUrl: true,
+                     email: true,
+                     name: true,
+                     online: true,
+                  },
+               },
+            },
+         });
 
-      return room;
+         return room;
+      } catch (error) {
+         throw new BadRequestException(INVALID_INVITED_USERS);
+      }
    }
 
    async deleteOne(roomId: number) {
@@ -51,5 +66,22 @@ export class RoomService {
       } catch (error) {
          throw new NotFoundException(NOT_FOUND);
       }
+   }
+
+   async getAll(userId: number) {
+      return await this.prismaService.room.findMany({
+         where: { users: { some: { id: userId } } },
+         include: {
+            users: {
+               select: {
+                  avatarUrl: true,
+                  id: true,
+                  name: true,
+                  email: true,
+                  online: true,
+               },
+            },
+         },
+      });
    }
 }
