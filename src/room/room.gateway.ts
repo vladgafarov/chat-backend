@@ -9,6 +9,8 @@ import {
    WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
+import { JoinRoomDto } from './dto/join-room.dto';
+import { SocketRooms } from './types/SocketRooms';
 
 @WebSocketGateway()
 export class RoomGateway
@@ -17,12 +19,21 @@ export class RoomGateway
    @WebSocketServer()
    server: Server;
 
+   static socketRooms: SocketRooms = {};
+
    @SubscribeMessage('CLIENT@ROOMS:JOIN')
-   handleRoomJoin(
-      @MessageBody() data: string,
-      @ConnectedSocket() client: Socket,
+   joinRoom(
+      @MessageBody() { roomId, user }: JoinRoomDto,
+      @ConnectedSocket() socket: Socket,
    ) {
-      return 'Hello world!';
+      const room = `rooms/${roomId}`;
+
+      socket.join(room);
+
+      RoomGateway.socketRooms[socket.id] = { roomId, user };
+
+      //emit to all users in room
+      this.server.in(room).emit('SERVER@ROOM:JOIN', user);
    }
 
    afterInit(server: Server) {
@@ -30,13 +41,10 @@ export class RoomGateway
    }
 
    handleDisconnect(socket: Socket) {
-      socket.leave(socket.handshake.query.roomId as string);
       console.log(`Client disconnected: ${socket.id}`);
    }
 
    handleConnection(socket: Socket) {
-      socket.join(socket.handshake.query.roomId);
-      console.log(socket.rooms);
       console.log(`Client connected: ${socket.id}`);
    }
 }
