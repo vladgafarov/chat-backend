@@ -9,10 +9,14 @@ import {
    NOT_FOUND,
    USER_CANNOT_CHAT_HIMSELF,
 } from './room.constants';
+import { RoomGateway } from './room.gateway';
 
 @Injectable()
 export class RoomService {
-   constructor(private readonly prismaService: PrismaService) {}
+   constructor(
+      private readonly prismaService: PrismaService,
+      private readonly roomGateway: RoomGateway,
+   ) {}
 
    async createOne(userId: number, invitedUsers: number[]) {
       if (invitedUsers.includes(userId)) {
