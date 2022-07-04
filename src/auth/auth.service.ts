@@ -21,9 +21,12 @@ export class AuthService {
    async signup(dto: SignUpDto) {
       const passwordHash = await this.hashString(dto.password);
 
-      await this.userService.createOne({ ...dto, password: passwordHash });
+      const createdUser = await this.userService.createOne({
+         ...dto,
+         password: passwordHash,
+      });
 
-      return 'good';
+      return createdUser;
    }
 
    async login(dto: LoginDto) {
