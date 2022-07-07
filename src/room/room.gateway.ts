@@ -42,6 +42,7 @@ export class RoomGateway
 
    handleDisconnect(socket: Socket) {
       console.log(`Client disconnected: ${socket.id}`);
+      delete RoomGateway.socketRooms[socket.id];
    }
 
    handleConnection(socket: Socket) {

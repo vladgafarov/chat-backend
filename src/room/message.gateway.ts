@@ -1,4 +1,3 @@
-import { BadRequestException, UseGuards } from '@nestjs/common';
 import {
    ConnectedSocket,
    MessageBody,
@@ -8,11 +7,9 @@ import {
    WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { PrismaService } from 'src/prisma.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { MESSAGE_ADD_ERROR } from './room.constants';
-import { RoomGateway } from './room.gateway';
 
 @WebSocketGateway()
 export class MessageGateway {
