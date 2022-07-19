@@ -40,6 +40,13 @@ export class AppController {
 
       return data;
    }
+   
+   @Post('logout')
+   @HttpCode(200)
+   async logout(@Res({ passthrough: true }) res: Response) {
+      res.clearCookie('access_token');
+      res.clearCookie('refresh_token');
+   }
 
    @UseGuards(JwtAuthGuard)
    @Get('profile')
