@@ -13,10 +13,14 @@ import { AuthService } from 'src/auth/auth.service';
 import { LoginDto } from 'src/auth/dto/login.dto';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
+import { UserService } from './user/user.service';
 
 @Controller()
 export class AppController {
-   constructor(private readonly authService: AuthService) {}
+   constructor(
+      private readonly authService: AuthService,
+      private readonly userService: UserService,
+   ) {}
 
    @Post('signup')
    signup(@Body() dto: SignUpDto) {
@@ -40,7 +44,7 @@ export class AppController {
 
       return data;
    }
-   
+
    @Post('logout')
    @HttpCode(200)
    async logout(@Res({ passthrough: true }) res: Response) {
@@ -50,7 +54,9 @@ export class AppController {
 
    @UseGuards(JwtAuthGuard)
    @Get('profile')
-   getProfile(@Request() req) {
-      return req.user;
+   async getProfile(@Request() req) {
+      const user = await this.userService.findOne(req.user.id);
+
+      return user;
    }
 }

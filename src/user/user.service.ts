@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { User } from '@prisma/client';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { PrismaService } from 'src/prisma.service';
 import { ALREADY_EXIST } from './user.constants';
@@ -25,5 +26,20 @@ export class UserService {
       });
 
       return createdUser;
+   }
+
+   async findOne(id: number): Promise<Omit<User, 'password'>> {
+      return this.prismaSerivce.user.findUnique({
+         where: { id },
+         select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            createdAt: true,
+            online: true,
+            password: false,
+         },
+      });
    }
 }
