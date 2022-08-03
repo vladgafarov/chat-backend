@@ -21,7 +21,7 @@ export class RoomGateway
 
    static socketRooms: SocketRooms = {};
 
-   @SubscribeMessage('CLIENT@ROOMS:JOIN')
+   @SubscribeMessage('CLIENT@ROOM:JOIN')
    joinRoom(
       @MessageBody() { roomId, user }: JoinRoomDto,
       @ConnectedSocket() socket: Socket,
