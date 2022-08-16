@@ -37,7 +37,11 @@ export class ChatService {
    // }
 
    getUsers(): Promise<User[]> {
-      return this.prismaService.user.findMany();
+      return this.prismaService.user.findMany({
+         where: {
+            online: true,
+         },
+      });
    }
 
    // async addMessage({

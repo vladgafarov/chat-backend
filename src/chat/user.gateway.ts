@@ -19,6 +19,20 @@ export class UserGateway {
 
    constructor(private readonly chatService: ChatService) {}
 
+   @SubscribeMessage('CLIENT@USERS:GET')
+   async getUsers() {
+      const users = await this.chatService.getUsers();
+
+      this.server.emit('SERVER@USERS:GET', users);
+   }
+
+   @SubscribeMessage('CLIENT@USER:CONNECTED')
+   async userOnline(@MessageBody() user: User ) {
+      const user = await this.chatService.;
+
+      this.server.emit('SERVER@USERS:GET', users);
+   }
+
    // @SubscribeMessage('user:add')
    // async addUser(
    //    @MessageBody() { email, name }: Pick<User, 'name' | 'email'>,
@@ -29,10 +43,10 @@ export class UserGateway {
    //    return users;
    // }
 
-   @SubscribeMessage('users:get')
-   async getUsers() {
-      const users = await this.chatService.getUsers();
+   // @SubscribeMessage('users:get')
+   // async getUsers() {
+   //    const users = await this.chatService.getUsers();
 
-      this.server.emit('user:add', users);
-   }
+   //    this.server.emit('user:add', users);
+   // }
 }
