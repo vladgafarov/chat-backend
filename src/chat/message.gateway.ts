@@ -20,16 +20,6 @@ export class MessageGateway {
    @WebSocketServer()
    server: Server;
 
-   // @SubscribeMessage('message:add')
-   // async addMessage(
-   //    @MessageBody() message: Pick<Message, 'text' | 'authorId'>,
-   //    @ConnectedSocket() socket: Socket,
-   // ) {
-   //    await this.chatService.addMessage(message);
-
-   //    this.emitGetMessages(socket.handshake.query.roomId as string);
-   // }
-
    @SubscribeMessage('messages:get')
    async getMessages(@ConnectedSocket() socket: Socket) {
       const messages = await this.chatService.getMessages();

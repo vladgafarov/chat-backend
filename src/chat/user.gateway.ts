@@ -26,12 +26,12 @@ export class UserGateway {
       this.server.emit('SERVER@USERS:GET', users);
    }
 
-   @SubscribeMessage('CLIENT@USER:CONNECTED')
-   async userOnline(@MessageBody() user: User ) {
-      const user = await this.chatService.;
+   // @SubscribeMessage('CLIENT@USER:CONNECTED')
+   // async userOnline(@MessageBody() user: User ) {
+   //    const user = await this.chatService.;
 
-      this.server.emit('SERVER@USERS:GET', users);
-   }
+   //    this.server.emit('SERVER@USERS:GET', users);
+   // }
 
    // @SubscribeMessage('user:add')
    // async addUser(
