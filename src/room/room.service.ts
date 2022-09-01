@@ -56,7 +56,7 @@ export class RoomService {
       }
    }
 
-   async deleteOne(roomIds: number[]) {
+   async deleteMany(roomIds: number[]) {
       try {
          const deletedRoomsCount = await this.prismaService.room.deleteMany({
             where: {
