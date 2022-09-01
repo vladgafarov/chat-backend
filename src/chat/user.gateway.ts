@@ -14,14 +14,14 @@ import { ChatService } from './chat.service';
    },
 })
 export class UserGateway {
+   constructor(private readonly chatService: ChatService) {}
+
    @WebSocketServer()
    server: Server;
 
-   constructor(private readonly chatService: ChatService) {}
-
    @SubscribeMessage('CLIENT@USERS:GET')
-   async getUsers() {
-      const users = await this.chatService.getUsers();
+   async getUsers(@MessageBody() user: User) {
+      const users = await this.chatService.getOnlineUsers(user?.id);
 
       this.server.emit('SERVER@USERS:GET', users);
    }

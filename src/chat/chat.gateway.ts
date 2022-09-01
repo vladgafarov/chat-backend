@@ -16,10 +16,10 @@ import { ChatService } from './chat.service';
 export class ChatGateway
    implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
+   constructor(private readonly chatService: ChatService) {}
+
    @WebSocketServer()
    server: Server;
-
-   constructor(private readonly chatService: ChatService) {}
 
    afterInit(server: Server) {
       console.log('afterInit');
@@ -29,10 +29,12 @@ export class ChatGateway
       console.log(socket.handshake.auth);
       console.log(`Client connected: ${socket.id}`);
 
-      if (socket.handshake.auth.userId) {
-         await this.chatService.setUserOnline(socket.handshake.auth.userId);
+      const { userId } = socket.handshake.auth;
 
-         const users = await this.chatService.getUsers();
+      if (userId) {
+         await this.chatService.setUserOnline(userId);
+
+         const users = await this.chatService.getOnlineUsers(userId);
          this.server.emit('SERVER@USERS:GET', users);
       }
    }
@@ -41,10 +43,12 @@ export class ChatGateway
       console.log(socket.handshake.auth);
       console.log(`Client disconnected: ${socket.id}`);
 
-      if (socket.handshake.auth.userId) {
-         await this.chatService.setUserOffline(socket.handshake.auth.userId);
+      const { userId } = socket.handshake.auth;
 
-         const users = await this.chatService.getUsers();
+      if (userId) {
+         await this.chatService.setUserOffline(userId);
+
+         const users = await this.chatService.getOnlineUsers(userId);
          this.server.emit('SERVER@USERS:GET', users);
       }
    }

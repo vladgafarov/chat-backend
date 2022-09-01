@@ -6,10 +6,13 @@ import { PrismaService } from 'src/prisma.service';
 export class ChatService {
    constructor(private readonly prismaService: PrismaService) {}
 
-   getUsers(): Promise<User[]> {
+   getOnlineUsers(userId?: User['id']): Promise<User[]> {
       return this.prismaService.user.findMany({
          where: {
             online: true,
+            id: {
+               not: userId,
+            },
          },
       });
    }
