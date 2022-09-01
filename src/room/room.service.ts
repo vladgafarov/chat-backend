@@ -56,31 +56,21 @@ export class RoomService {
       }
    }
 
-   async deleteOne(roomId: number, userId: number) {
+   async deleteOne(roomIds: number[]) {
       try {
-         const rooms = await this.prismaService.room.findMany({
-            where: { users: { some: { id: userId } } },
-            select: {
-               id: true,
+         const deletedRoomsCount = await this.prismaService.room.deleteMany({
+            where: {
+               id: {
+                  in: roomIds,
+               },
             },
          });
-         const roomsIds = rooms.reduce((acc, curr) => {
-            return [...acc, curr.id];
-         }, []);
 
-         if (!roomsIds.includes(roomId)) {
+         if (!deletedRoomsCount) {
             throw new NotFoundException(NOT_FOUND);
          }
 
-         const room = await this.prismaService.room.delete({
-            where: { id: roomId },
-         });
-
-         if (!room) {
-            throw new NotFoundException(NOT_FOUND);
-         }
-
-         return room;
+         return deletedRoomsCount;
       } catch (error) {
          throw new NotFoundException(NOT_FOUND);
       }
