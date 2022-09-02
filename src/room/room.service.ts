@@ -38,6 +38,7 @@ export class RoomService {
                   online: true,
                },
             },
+            messages: true,
          },
       });
 

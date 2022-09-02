@@ -32,8 +32,19 @@ export class RoomGateway
 
       RoomGateway.socketRooms[socket.id] = { roomId, user };
 
+      console.log(RoomGateway);
+
       //emit to all users in room
-      this.server.in(room).emit('SERVER@ROOM:JOIN', user);
+      this.server.in(room).emit('SERVER@ROOM:JOIN', { user, roomId });
+   }
+
+   @SubscribeMessage('CLIENT@ROOM:LEAVE')
+   leaveRoom(
+      @MessageBody() { roomId, user }: JoinRoomDto,
+      @ConnectedSocket() socket: Socket,
+   ) {
+      console.log(`user ${user.email} left room ${roomId}`);
+      socket.leave(`rooms/${roomId}`);
    }
 
    afterInit(server: Server) {

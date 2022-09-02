@@ -23,6 +23,8 @@ export class MessageGateway {
       @MessageBody() { authorId, text, roomId }: AddMessageDto,
       @ConnectedSocket() client: Socket,
    ) {
+      console.log('addMessage', { authorId, text, roomId });
+
       try {
          const message = await this.prismaService.message.create({
             data: {
