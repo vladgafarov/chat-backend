@@ -3,6 +3,7 @@ import {
    Controller,
    Delete,
    Get,
+   Param,
    Post,
    Req,
    UseGuards,
@@ -42,5 +43,13 @@ export class RoomController {
       const userId = (req.user as UserPayload).id;
 
       return await this.roomService.getAll(userId);
+   }
+
+   @Get(':id')
+   @UseGuards(JwtAuthGuard)
+   async room(@Req() req: Request, @Param('id') id: string) {
+      const userId = (req.user as UserPayload).id;
+
+      return await this.roomService.getOne(userId, +id);
    }
 }

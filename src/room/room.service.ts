@@ -18,6 +18,36 @@ export class RoomService {
       private readonly roomGateway: RoomGateway,
    ) {}
 
+   async getOne(userId: number, roomId: number) {
+      const room = await this.prismaService.room.findFirst({
+         where: {
+            id: roomId,
+            users: {
+               some: {
+                  id: userId,
+               },
+            },
+         },
+         include: {
+            users: {
+               select: {
+                  id: true,
+                  avatarUrl: true,
+                  email: true,
+                  name: true,
+                  online: true,
+               },
+            },
+         },
+      });
+
+      if (!room) {
+         throw new NotFoundException(NOT_FOUND);
+      }
+
+      return room;
+   }
+
    async createOne(userId: number, invitedUsers: number[]) {
       if (invitedUsers.includes(userId)) {
          throw new BadRequestException(USER_CANNOT_CHAT_HIMSELF);
