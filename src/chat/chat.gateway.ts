@@ -32,7 +32,7 @@ export class ChatGateway
       const { userId } = socket.handshake.auth;
 
       if (userId) {
-         await this.chatService.setUserOnline(userId);
+         // await this.chatService.setUserOnline(userId);
 
          const users = await this.chatService.getOnlineUsers(userId);
          this.server.emit('SERVER@USERS:GET', users);
@@ -46,7 +46,7 @@ export class ChatGateway
       const { userId } = socket.handshake.auth;
 
       if (userId) {
-         await this.chatService.setUserOffline(userId);
+         // await this.chatService.setUserOffline(userId);
 
          const users = await this.chatService.getOnlineUsers(userId);
          this.server.emit('SERVER@USERS:GET', users);

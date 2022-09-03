@@ -31,8 +31,10 @@ export class RoomController {
 
    @Delete()
    @UseGuards(JwtAuthGuard)
-   async delete(@Body() dto: DeleteRoomDto) {
-      const count = await this.roomService.deleteMany(dto.ids);
+   async delete(@Body() dto: DeleteRoomDto, @Req() req: Request) {
+      const userId = (req.user as UserPayload).id;
+
+      const count = await this.roomService.deleteMany(dto.ids, userId);
 
       return count;
    }

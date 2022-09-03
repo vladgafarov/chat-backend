@@ -18,20 +18,23 @@ model Message {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  email     String    @unique
-  password  String
-  createdAt DateTime  @default(now())
-  name      String
-  messages  Message[]
-  online    Boolean   @default(false)
-  rooms     Room[]
-  avatarUrl String?
+  id           Int       @id @default(autoincrement())
+  email        String    @unique
+  password     String
+  createdAt    DateTime  @default(now())
+  name         String
+  messages     Message[]
+  createdRooms Room[]    @relation("UserToCreatedRoom")
+  inivtedRooms Room[]    @relation("UserToRoom")
+  online       Boolean   @default(false)
+  avatarUrl    String?
 }
 
 model Room {
-  id        Int       @id @default(autoincrement())
-  messages  Message[]
-  users     User[]
-  createdAt DateTime  @default(now())
+  id           Int       @id @default(autoincrement())
+  messages     Message[]
+  author       User      @relation(name: "UserToCreatedRoom", fields: [authorId], references: [id])
+  authorId     Int
+  createdAt    DateTime  @default(now())
+  invitedUsers User[]    @relation(name: "UserToRoom")
 }

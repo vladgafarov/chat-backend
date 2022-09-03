@@ -9,27 +9,23 @@ import {
    NOT_FOUND,
    USER_CANNOT_CHAT_HIMSELF,
 } from './room.constants';
-import { RoomGateway } from './room.gateway';
 
 @Injectable()
 export class RoomService {
-   constructor(
-      private readonly prismaService: PrismaService,
-      private readonly roomGateway: RoomGateway,
-   ) {}
+   constructor(private readonly prismaService: PrismaService) {}
 
    async getOne(userId: number, roomId: number) {
       const room = await this.prismaService.room.findFirst({
          where: {
             id: roomId,
-            users: {
+            invitedUsers: {
                some: {
                   id: userId,
                },
             },
          },
          include: {
-            users: {
+            invitedUsers: {
                select: {
                   id: true,
                   avatarUrl: true,
@@ -64,19 +60,13 @@ export class RoomService {
       try {
          const room = await this.prismaService.room.create({
             data: {
-               users: {
-                  connect: [{ id: userId }, ...parsedInvitedUsers],
-               },
-            },
-            include: {
-               users: {
-                  select: {
-                     id: true,
-                     avatarUrl: true,
-                     email: true,
-                     name: true,
-                     online: true,
+               author: {
+                  connect: {
+                     id: userId,
                   },
+               },
+               invitedUsers: {
+                  connect: parsedInvitedUsers,
                },
             },
          });
@@ -87,13 +77,18 @@ export class RoomService {
       }
    }
 
-   async deleteMany(roomIds: number[]) {
+   async deleteMany(roomIds: number[], userId: number) {
       try {
          const deletedRoomsCount = await this.prismaService.room.deleteMany({
             where: {
-               id: {
-                  in: roomIds,
-               },
+               AND: [
+                  {
+                     id: {
+                        in: roomIds,
+                     },
+                  },
+                  { authorId: userId },
+               ],
             },
          });
 
@@ -109,9 +104,22 @@ export class RoomService {
 
    async getAll(userId: number) {
       return await this.prismaService.room.findMany({
-         where: { users: { some: { id: userId } } },
+         where: {
+            OR: [
+               {
+                  authorId: userId,
+               },
+               {
+                  invitedUsers: {
+                     some: {
+                        id: userId,
+                     },
+                  },
+               },
+            ],
+         },
          include: {
-            users: {
+            invitedUsers: {
                select: {
                   avatarUrl: true,
                   id: true,
