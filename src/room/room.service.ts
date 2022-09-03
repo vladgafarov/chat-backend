@@ -18,13 +18,27 @@ export class RoomService {
       const room = await this.prismaService.room.findFirst({
          where: {
             id: roomId,
-            invitedUsers: {
-               some: {
-                  id: userId,
+            OR: [
+               {
+                  authorId: userId,
                },
-            },
+               {
+                  invitedUsers: {
+                     some: {
+                        id: userId,
+                     },
+                  },
+               },
+            ],
          },
          include: {
+            author: {
+               select: {
+                  email: true,
+                  name: true,
+                  online: true,
+               },
+            },
             invitedUsers: {
                select: {
                   id: true,
@@ -68,6 +82,7 @@ export class RoomService {
                invitedUsers: {
                   connect: parsedInvitedUsers,
                },
+               title: parsedInvitedUsers.length === 1 ? '' : 'fill me please',
             },
          });
 
@@ -119,6 +134,13 @@ export class RoomService {
             ],
          },
          include: {
+            author: {
+               select: {
+                  email: true,
+                  name: true,
+                  online: true,
+               },
+            },
             invitedUsers: {
                select: {
                   avatarUrl: true,
