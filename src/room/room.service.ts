@@ -5,7 +5,9 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma.service';
 import {
+   CHAT_WITH_USER_EXISTS,
    INVALID_INVITED_USERS,
+   INVALID_NOT_GROUP_CHAT,
    NOT_FOUND,
    USER_CANNOT_CHAT_HIMSELF,
 } from './room.constants';
@@ -59,9 +61,46 @@ export class RoomService {
       return room;
    }
 
-   async createOne(userId: number, invitedUsers: number[]) {
+   async createOne(
+      userId: number,
+      invitedUsers: number[],
+      isGroupChat: boolean,
+   ) {
       if (invitedUsers.includes(userId)) {
          throw new BadRequestException(USER_CANNOT_CHAT_HIMSELF);
+      }
+
+      if (!isGroupChat && invitedUsers.length > 1) {
+         throw new BadRequestException(INVALID_NOT_GROUP_CHAT);
+      }
+
+      if (!isGroupChat) {
+         const chat = await this.prismaService.room.findFirst({
+            where: {
+               OR: [
+                  {
+                     authorId: userId,
+                     invitedUsers: {
+                        every: {
+                           id: invitedUsers[0],
+                        },
+                     },
+                  },
+                  {
+                     authorId: invitedUsers[0],
+                     invitedUsers: {
+                        every: {
+                           id: userId,
+                        },
+                     },
+                  },
+               ],
+            },
+         });
+
+         if (chat) {
+            throw new BadRequestException(CHAT_WITH_USER_EXISTS);
+         }
       }
 
       const parsedInvitedUsers: Array<{ id: number }> = invitedUsers.reduce(
@@ -83,6 +122,7 @@ export class RoomService {
                   connect: parsedInvitedUsers,
                },
                title: parsedInvitedUsers.length === 1 ? '' : 'fill me please',
+               isGroupChat,
             },
          });
 

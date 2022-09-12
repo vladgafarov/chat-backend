@@ -24,7 +24,11 @@ export class RoomController {
    async create(@Body() dto: CreateRoomDto, @Req() req: Request) {
       const userId = (req.user as UserPayload).id;
 
-      const room = await this.roomService.createOne(userId, dto.users);
+      const room = await this.roomService.createOne(
+         userId,
+         dto.users,
+         dto.isGroupChat,
+      );
 
       return room;
    }
