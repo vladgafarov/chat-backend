@@ -1,4 +1,11 @@
-import { ArrayMinSize, IsArray, IsBoolean } from 'class-validator';
+import {
+   ArrayMinSize,
+   IsArray,
+   IsBoolean,
+   IsNotEmpty,
+   IsString,
+   MaxLength,
+} from 'class-validator';
 
 export class CreateRoomDto {
    @IsArray()
@@ -7,4 +14,9 @@ export class CreateRoomDto {
 
    @IsBoolean()
    isGroupChat: boolean;
+
+   @IsString()
+   @IsNotEmpty()
+   @MaxLength(50)
+   groupName: string;
 }

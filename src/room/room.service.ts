@@ -50,7 +50,22 @@ export class RoomService {
                   online: true,
                },
             },
-            messages: true,
+            messages: {
+               select: {
+                  id: true,
+                  text: true,
+                  createdAt: true,
+                  author: {
+                     select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        avatarUrl: true,
+                        online: true,
+                     },
+                  },
+               },
+            },
          },
       });
 
@@ -65,6 +80,7 @@ export class RoomService {
       userId: number,
       invitedUsers: number[],
       isGroupChat: boolean,
+      groupName: string,
    ) {
       if (invitedUsers.includes(userId)) {
          throw new BadRequestException(USER_CANNOT_CHAT_HIMSELF);
@@ -121,7 +137,7 @@ export class RoomService {
                invitedUsers: {
                   connect: parsedInvitedUsers,
                },
-               title: !isGroupChat ? '' : 'fill me please',
+               title: !isGroupChat ? '' : groupName,
                isGroupChat,
             },
          });

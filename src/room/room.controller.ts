@@ -28,6 +28,7 @@ export class RoomController {
          userId,
          dto.users,
          dto.isGroupChat,
+         dto.groupName,
       );
 
       return room;
