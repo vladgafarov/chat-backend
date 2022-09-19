@@ -121,7 +121,7 @@ export class RoomService {
                invitedUsers: {
                   connect: parsedInvitedUsers,
                },
-               title: parsedInvitedUsers.length === 1 ? '' : 'fill me please',
+               title: !isGroupChat ? '' : 'fill me please',
                isGroupChat,
             },
          });
