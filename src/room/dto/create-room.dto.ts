@@ -5,6 +5,7 @@ import {
    IsNotEmpty,
    IsString,
    MaxLength,
+   ValidateIf,
 } from 'class-validator';
 
 export class CreateRoomDto {
@@ -15,6 +16,7 @@ export class CreateRoomDto {
    @IsBoolean()
    isGroupChat: boolean;
 
+   @ValidateIf((o) => o.isGroupChat)
    @IsString()
    @IsNotEmpty()
    @MaxLength(50)
