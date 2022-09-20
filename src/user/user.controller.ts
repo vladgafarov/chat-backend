@@ -1,4 +1,5 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, Req, UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { PrismaService } from 'src/prisma.service';
 
 @Controller('user')
@@ -6,12 +7,22 @@ export class UserController {
    constructor(private readonly prismaService: PrismaService) {}
 
    @Get()
-   async findUsersByEmail(@Query('email') email: string) {
+   @UseGuards(JwtAuthGuard)
+   async findUsersByEmail(@Query('email') email: string, @Req() req) {
       const users = await this.prismaService.user.findMany({
          where: {
-            email: {
-               contains: email,
-            },
+            AND: [
+               {
+                  email: {
+                     contains: email,
+                  },
+               },
+               {
+                  id: {
+                     not: req.user.id,
+                  },
+               },
+            ],
          },
          select: {
             id: true,
