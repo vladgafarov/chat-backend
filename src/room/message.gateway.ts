@@ -1,12 +1,11 @@
 import {
-   ConnectedSocket,
    MessageBody,
    SubscribeMessage,
    WebSocketGateway,
    WebSocketServer,
    WsException,
 } from '@nestjs/websockets';
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import { PrismaService } from 'src/prisma.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { MESSAGE_ADD_ERROR } from './room.constants';
@@ -19,10 +18,7 @@ export class MessageGateway {
    server: Server;
 
    @SubscribeMessage('CLIENT@MESSAGE:ADD')
-   async addMessage(
-      @MessageBody() { authorId, text, roomId }: AddMessageDto,
-      @ConnectedSocket() client: Socket,
-   ) {
+   async addMessage(@MessageBody() { authorId, text, roomId }: AddMessageDto) {
       if (!text) {
          throw new WsException(MESSAGE_ADD_ERROR);
       }
@@ -45,9 +41,11 @@ export class MessageGateway {
             include: {
                author: {
                   select: {
+                     id: true,
                      name: true,
                      email: true,
                      avatarUrl: true,
+                     online: true,
                   },
                },
             },
