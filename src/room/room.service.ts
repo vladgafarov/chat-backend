@@ -206,6 +206,23 @@ export class RoomService {
                   online: true,
                },
             },
+            messages: {
+               take: 1,
+               orderBy: {
+                  createdAt: 'desc',
+               },
+               select: {
+                  id: true,
+                  text: true,
+                  createdAt: true,
+                  author: {
+                     select: {
+                        id: true,
+                        name: true,
+                     },
+                  },
+               },
+            },
          },
       });
    }
