@@ -8,26 +8,29 @@ datasource db {
 }
 
 model Message {
-  id        Int      @id @default(autoincrement())
-  text      String
-  createdAt DateTime @default(now())
-  author    User     @relation(fields: [authorId], references: [id])
-  authorId  Int
-  room      Room     @relation(fields: [roomId], references: [id])
-  roomId    Int
+  id          Int      @id @default(autoincrement())
+  text        String
+  createdAt   DateTime @default(now())
+  author      User     @relation(fields: [authorId], references: [id])
+  authorId    Int
+  room        Room     @relation(fields: [roomId], references: [id])
+  roomId      Int
+  isRead      Boolean  @default(false)
+  unreadUsers User[]   @relation("UserToUnreadMessage")
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
-  email        String    @unique
-  password     String
-  createdAt    DateTime  @default(now())
-  name         String
-  messages     Message[]
-  createdRooms Room[]    @relation("UserToCreatedRoom")
-  inivtedRooms Room[]    @relation("UserToRoom")
-  online       Boolean   @default(false)
-  avatarUrl    String?
+  id             Int       @id @default(autoincrement())
+  email          String    @unique
+  password       String
+  createdAt      DateTime  @default(now())
+  name           String
+  messages       Message[]
+  createdRooms   Room[]    @relation("UserToCreatedRoom")
+  inivtedRooms   Room[]    @relation("UserToRoom")
+  online         Boolean   @default(false)
+  unreadMessages Message[] @relation("UserToUnreadMessage")
+  avatarUrl      String?
 }
 
 model Room {
