@@ -55,6 +55,7 @@ export class RoomService {
                   id: true,
                   text: true,
                   createdAt: true,
+                  isRead: true,
                   author: {
                      select: {
                         id: true,
