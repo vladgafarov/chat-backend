@@ -65,6 +65,14 @@ export class RoomService {
                         online: true,
                      },
                   },
+                  unreadUsers: {
+                     where: {
+                        id: userId,
+                     },
+                     select: {
+                        id: true,
+                     },
+                  },
                },
             },
          },
@@ -74,7 +82,20 @@ export class RoomService {
          throw new NotFoundException(NOT_FOUND);
       }
 
-      return room;
+      //add isRead to messages in room
+      const messages = room.messages.map((message) => {
+         const isReadByCurrentUser = message.unreadUsers.length === 0;
+
+         return {
+            ...message,
+            isReadByCurrentUser,
+         };
+      });
+
+      return {
+         ...room,
+         messages,
+      };
    }
 
    async createOne(
@@ -175,7 +196,7 @@ export class RoomService {
    }
 
    async getAll(userId: number) {
-      return await this.prismaService.room.findMany({
+      const rooms = await this.prismaService.room.findMany({
          where: {
             OR: [
                {
@@ -226,5 +247,34 @@ export class RoomService {
             },
          },
       });
+
+      const roomsWithUnreadMessages = rooms.map(async (room) => {
+         const countUnreadMessages = await this.countUnreadMessagesRoom(
+            room.id,
+            userId,
+         );
+
+         return {
+            ...room,
+            countUnreadMessages,
+         };
+      });
+
+      return await Promise.all(roomsWithUnreadMessages);
+   }
+
+   async countUnreadMessagesRoom(roomId: number, userId: number) {
+      const unreadMessagesCount = await this.prismaService.message.count({
+         where: {
+            roomId,
+            unreadUsers: {
+               some: {
+                  id: userId,
+               },
+            },
+         },
+      });
+
+      return unreadMessagesCount;
    }
 }
