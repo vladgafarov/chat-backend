@@ -19,7 +19,7 @@ export class RoomGateway
    @WebSocketServer()
    server: Server;
 
-   static socketRooms: SocketRooms = {};
+   public static socketRooms: SocketRooms = {};
 
    @SubscribeMessage('CLIENT@ROOM:JOIN')
    joinRoom(

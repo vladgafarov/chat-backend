@@ -99,4 +99,20 @@ export class MessageService {
          throw new WsException(error);
       }
    }
+
+   async getUserIdsFromRoom(roomId: number) {
+      const room = await this.prismaService.room.findUnique({
+         where: { id: roomId },
+         select: {
+            authorId: true,
+            invitedUsers: {
+               select: {
+                  id: true,
+               },
+            },
+         },
+      });
+
+      return [...room.invitedUsers.map((u) => u.id), room.authorId];
+   }
 }
