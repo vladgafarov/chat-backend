@@ -1,18 +1,23 @@
 import {
+   ConnectedSocket,
    MessageBody,
    SubscribeMessage,
    WebSocketGateway,
    WebSocketServer,
 } from '@nestjs/websockets';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { RoomGateway } from 'src/room/room.gateway';
+import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
 import { MessageService } from './message.service';
 
 @WebSocketGateway()
 export class MessageGateway {
-   constructor(private readonly messageService: MessageService) {}
+   constructor(
+      private readonly messageService: MessageService,
+      private readonly roomService: RoomService,
+   ) {}
 
    @WebSocketServer()
    server: Server;
@@ -22,20 +27,48 @@ export class MessageGateway {
       const message = await this.messageService.addMessage(dto);
 
       const userIds = await this.messageService.getUserIdsFromRoom(dto.roomId);
-      const onlineUsersSocketIds = Object.entries(RoomGateway.socketRooms)
+      const onlineUsers = Object.entries(RoomGateway.socketRooms)
          .filter(([, value]) => userIds.includes(value.user.id))
-         .map(([key]) => key);
+         .map(async ([key, value]) => {
+            return {
+               socketId: key,
+               userId: value.user.id,
+               countUnreadMessages:
+                  await this.roomService.countUnreadMessagesRoom(
+                     dto.roomId,
+                     value.user.id,
+                  ),
+            };
+         });
 
-      this.server.to(onlineUsersSocketIds).emit('SERVER@MESSAGE:ADD-SIDEBAR', {
-         message,
-         roomId: dto.roomId,
+      const onlineUsersAwaited = await Promise.all(onlineUsers);
+
+      onlineUsersAwaited.forEach((item) => {
+         this.server.to(item.socketId).emit('SERVER@MESSAGE:ADD-SIDEBAR', {
+            message,
+            roomId: dto.roomId,
+            countUnreadMessages: item.countUnreadMessages,
+         });
       });
       this.server.in(`rooms/${dto.roomId}`).emit('SERVER@MESSAGE:ADD', message);
    }
 
    @SubscribeMessage('CLIENT@MESSAGE:READ')
-   async setMessageRead(@MessageBody() dto: SetMessageReadDto) {
+   async setMessageRead(
+      @MessageBody() dto: SetMessageReadDto,
+      @ConnectedSocket() client: Socket,
+   ) {
       const message = await this.messageService.setMessageRead(dto);
+      const countUnreadMessages =
+         await this.roomService.countUnreadMessagesRoom(
+            dto.roomId,
+            dto.userWhoReadId,
+         );
+
+      client.emit('SERVER@MESSAGE:READ-SIDEBAR', {
+         roomId: dto.roomId,
+         countUnreadMessages,
+      });
 
       this.server
          .in(`rooms/${dto.roomId}`)
