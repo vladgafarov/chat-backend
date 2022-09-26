@@ -36,37 +36,48 @@ export class MessageService {
             .filter((u) => u !== authorId)
             .map((u) => ({ id: u }));
 
-         const message = await this.prismaService.message.create({
+         const roomWithLastMessage = await this.prismaService.room.update({
+            where: { id: roomId },
             data: {
-               text,
-               author: {
-                  connect: {
-                     id: authorId,
+               updatedAt: new Date(),
+               messages: {
+                  create: {
+                     text,
+                     author: {
+                        connect: {
+                           id: authorId,
+                        },
+                     },
+                     unreadUsers: {
+                        connect: otherUsers,
+                     },
                   },
-               },
-               room: {
-                  connect: {
-                     id: roomId,
-                  },
-               },
-               unreadUsers: {
-                  connect: otherUsers,
                },
             },
             include: {
-               author: {
+               messages: {
+                  take: 1,
+                  orderBy: {
+                     createdAt: 'desc',
+                  },
                   select: {
                      id: true,
-                     name: true,
-                     email: true,
-                     avatarUrl: true,
-                     online: true,
+                     text: true,
+                     createdAt: true,
+                     author: {
+                        select: {
+                           id: true,
+                           name: true,
+                           email: true,
+                           avatarUrl: true,
+                        },
+                     },
                   },
                },
             },
          });
 
-         return message;
+         return roomWithLastMessage.messages[0];
       } catch (error) {
          if (error instanceof PrismaClientKnownRequestError) {
             throw new WsException(error.message);
