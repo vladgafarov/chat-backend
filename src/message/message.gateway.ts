@@ -43,11 +43,11 @@ export class MessageGateway {
 
       const onlineUsersAwaited = await Promise.all(onlineUsers);
 
-      onlineUsersAwaited.forEach((item) => {
-         this.server.to(item.socketId).emit('SERVER@MESSAGE:ADD-SIDEBAR', {
-            message,
-            roomId: dto.roomId,
-            countUnreadMessages: item.countUnreadMessages,
+      onlineUsersAwaited.forEach(async (item) => {
+         const userRooms = await this.roomService.getAll(item.userId);
+
+         this.server.to(item.socketId).emit('SERVER@UPDATE-SIDEBAR', {
+            userRooms,
          });
       });
       this.server.in(`rooms/${dto.roomId}`).emit('SERVER@MESSAGE:ADD', message);
@@ -59,15 +59,10 @@ export class MessageGateway {
       @ConnectedSocket() client: Socket,
    ) {
       const message = await this.messageService.setMessageRead(dto);
-      const countUnreadMessages =
-         await this.roomService.countUnreadMessagesRoom(
-            dto.roomId,
-            dto.userWhoReadId,
-         );
+      const userRooms = await this.roomService.getAll(dto.userWhoReadId);
 
-      client.emit('SERVER@MESSAGE:READ-SIDEBAR', {
-         roomId: dto.roomId,
-         countUnreadMessages,
+      client.emit('SERVER@UPDATE-SIDEBAR', {
+         userRooms,
       });
 
       this.server
