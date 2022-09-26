@@ -211,6 +211,9 @@ export class RoomService {
                },
             ],
          },
+         orderBy: {
+            updatedAt: 'desc',
+         },
          include: {
             author: {
                select: {
