@@ -21,7 +21,7 @@ export class ChatGateway
    @WebSocketServer()
    server: Server;
 
-   afterInit(server: Server) {
+   afterInit() {
       console.log('afterInit');
    }
 
@@ -33,9 +33,6 @@ export class ChatGateway
 
       if (userId) {
          await this.chatService.updateUserOnlineStatus(userId, true);
-
-         // const users = await this.chatService.getOnlineUsers(userId);
-         // this.server.emit('SERVER@USERS:GET', users);
       }
    }
 
@@ -47,9 +44,6 @@ export class ChatGateway
 
       if (userId) {
          await this.chatService.updateUserOnlineStatus(userId, false);
-
-         // const users = await this.chatService.getOnlineUsers(userId);
-         // this.server.emit('SERVER@USERS:GET', users);
       }
    }
 }

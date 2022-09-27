@@ -36,6 +36,7 @@ export class RoomService {
          include: {
             author: {
                select: {
+                  id: true,
                   email: true,
                   name: true,
                   online: true,
@@ -92,9 +93,18 @@ export class RoomService {
          };
       });
 
+      const title = this.generateTitle({
+         authorId: room.author.id,
+         authorName: room.author.name,
+         invitedUserName: room.invitedUsers[0]?.name,
+         title: room.title,
+         userId,
+      });
+
       return {
          ...room,
          messages,
+         title,
       };
    }
 
@@ -217,6 +227,7 @@ export class RoomService {
          include: {
             author: {
                select: {
+                  id: true,
                   email: true,
                   name: true,
                   online: true,
@@ -251,19 +262,28 @@ export class RoomService {
          },
       });
 
-      const roomsWithUnreadMessages = rooms.map(async (room) => {
+      const roomsWithCustomFields = rooms.map(async (room) => {
          const countUnreadMessages = await this.countUnreadMessagesRoom(
             room.id,
             userId,
          );
 
+         const title = this.generateTitle({
+            authorId: room.author.id,
+            authorName: room.author.name,
+            invitedUserName: room.invitedUsers[0]?.name,
+            title: room.title,
+            userId,
+         });
+
          return {
             ...room,
             countUnreadMessages,
+            title,
          };
       });
 
-      return await Promise.all(roomsWithUnreadMessages);
+      return await Promise.all(roomsWithCustomFields);
    }
 
    async countUnreadMessagesRoom(roomId: number, userId: number) {
@@ -279,5 +299,31 @@ export class RoomService {
       });
 
       return unreadMessagesCount;
+   }
+
+   generateTitle({
+      authorId,
+      authorName,
+      invitedUserName,
+      title,
+      userId,
+   }: {
+      authorId: number;
+      authorName: string;
+      userId: number;
+      invitedUserName: string;
+      title: string;
+   }): string {
+      if (title) {
+         return title;
+      }
+
+      const isUserAuthor = authorId === userId;
+
+      if (isUserAuthor) {
+         return invitedUserName;
+      }
+
+      return authorName;
    }
 }
