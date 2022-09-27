@@ -32,9 +32,6 @@ export class RoomGateway
 
       RoomGateway.socketRooms[socket.id] = { roomId, user };
 
-      console.log(RoomGateway);
-
-      //emit to all users in room
       this.server.in(room).emit('SERVER@ROOM:JOIN', { user, roomId });
    }
 

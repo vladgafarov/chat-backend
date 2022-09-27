@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 import { Message, User } from '@prisma/client';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { PrismaService } from 'src/prisma.service';
+import { CANNOT_SET_OFFLINE, CANNOT_SET_ONLINE } from './chat.constants';
 
 @Injectable()
 export class ChatService {
@@ -21,25 +24,21 @@ export class ChatService {
       return this.prismaService.message.findMany();
    }
 
-   setUserOnline(userId: number): Promise<User> {
-      return this.prismaService.user.update({
-         where: {
-            id: userId,
-         },
-         data: {
-            online: true,
-         },
-      });
-   }
-
-   setUserOffline(userId: number): Promise<User> {
-      return this.prismaService.user.update({
-         where: {
-            id: userId,
-         },
-         data: {
-            online: false,
-         },
-      });
+   async updateUserOnlineStatus(
+      userId: number,
+      online: boolean,
+   ): Promise<User> {
+      try {
+         return await this.prismaService.user.update({
+            where: { id: userId },
+            data: { online },
+         });
+      } catch (error) {
+         if (error instanceof PrismaClientKnownRequestError) {
+            throw new WsException(error.message);
+         }
+         console.log(error);
+         throw new WsException(online ? CANNOT_SET_ONLINE : CANNOT_SET_OFFLINE);
+      }
    }
 }
