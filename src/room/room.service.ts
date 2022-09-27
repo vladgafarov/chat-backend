@@ -105,6 +105,7 @@ export class RoomService {
          ...room,
          messages,
          title,
+         isCurrentUserAuthor: room.author.id === userId,
       };
    }
 
@@ -280,6 +281,7 @@ export class RoomService {
             ...room,
             countUnreadMessages,
             title,
+            isCurrentUserAuthor: room.author.id === userId,
          };
       });
 
