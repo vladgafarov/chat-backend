@@ -29,8 +29,6 @@ export class ChatService {
       online: boolean,
    ): Promise<User> {
       try {
-         console.log({ online, userId });
-
          return await this.prismaService.user.update({
             where: { id: userId },
             data: { online },

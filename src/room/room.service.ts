@@ -288,6 +288,8 @@ export class RoomService {
       return await Promise.all(roomsWithCustomFields);
    }
 
+   // async updateOne(roomId: number, userId: number, title: string) {}
+
    async countUnreadMessagesRoom(roomId: number, userId: number) {
       const unreadMessagesCount = await this.prismaService.message.count({
          where: {

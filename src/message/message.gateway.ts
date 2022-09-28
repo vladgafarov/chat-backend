@@ -69,4 +69,14 @@ export class MessageGateway {
          .in(`rooms/${dto.roomId}`)
          .emit('SERVER@MESSAGE:READ', message);
    }
+
+   @SubscribeMessage('CLIENT@MESSAGE:IS-TYPING')
+   async isTyping(@MessageBody() { roomId, userId, name }) {
+      // console.log(roomId, userId, name);
+      console.log('isTyping');
+
+      this.server
+         .in(`rooms/${roomId}`)
+         .emit('SERVER@MESSAGE:IS-TYPING', { userId, name });
+   }
 }
