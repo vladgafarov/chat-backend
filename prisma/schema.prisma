@@ -17,6 +17,7 @@ model Message {
   roomId      Int
   isRead      Boolean  @default(false)
   unreadUsers User[]   @relation("UserToUnreadMessage")
+  isEdited    Boolean  @default(false)
 }
 
 model User {

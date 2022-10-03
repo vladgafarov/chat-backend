@@ -25,25 +25,25 @@ export class ChatGateway
       console.log('afterInit');
    }
 
-   async handleConnection(socket: Socket) {
+   handleConnection(socket: Socket) {
       console.log(socket.handshake.auth);
       console.log(`Client connected: ${socket.id}`);
 
       const { userId } = socket.handshake.auth;
 
       if (userId) {
-         await this.chatService.updateUserOnlineStatus(userId, true);
+         this.chatService.updateUserOnlineStatus(userId, true);
       }
    }
 
-   async handleDisconnect(socket: Socket) {
+   handleDisconnect(socket: Socket) {
       console.log(socket.handshake.auth);
       console.log(`Client disconnected: ${socket.id}`);
 
       const { userId } = socket.handshake.auth;
 
       if (userId) {
-         await this.chatService.updateUserOnlineStatus(userId, false);
+         this.chatService.updateUserOnlineStatus(userId, false);
       }
    }
 }

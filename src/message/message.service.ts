@@ -87,6 +87,26 @@ export class MessageService {
       }
    }
 
+   async updateMessage(messageId: number, text: string) {
+      try {
+         const message = await this.prismaService.message.update({
+            where: { id: messageId },
+            data: {
+               text,
+               isEdited: true,
+            },
+         });
+
+         return message;
+      } catch (error) {
+         if (error instanceof PrismaClientKnownRequestError) {
+            throw new WsException(error.message);
+         }
+
+         throw new WsException(error);
+      }
+   }
+
    async setMessageRead({ id, userWhoReadId }: SetMessageReadDto) {
       try {
          const message = await this.prismaService.message.update({

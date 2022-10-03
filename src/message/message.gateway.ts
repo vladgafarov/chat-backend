@@ -10,6 +10,7 @@ import { RoomGateway } from 'src/room/room.gateway';
 import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
+import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessageService } from './message.service';
 
 @WebSocketGateway()
@@ -51,6 +52,20 @@ export class MessageGateway {
          });
       });
       this.server.in(`rooms/${dto.roomId}`).emit('SERVER@MESSAGE:ADD', message);
+   }
+
+   @SubscribeMessage('CLIENT@MESSAGE:UPDATE')
+   async updateMessage(
+      @MessageBody() { roomId, messageId, text }: UpdateMessageDto,
+   ) {
+      const updatedMessage = await this.messageService.updateMessage(
+         messageId,
+         text,
+      );
+
+      this.server
+         .in(`rooms/${roomId}`)
+         .emit('SERVER@MESSAGE:UPDATE', updatedMessage);
    }
 
    @SubscribeMessage('CLIENT@MESSAGE:READ')
