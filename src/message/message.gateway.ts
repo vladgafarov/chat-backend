@@ -9,6 +9,7 @@ import { Server, Socket } from 'socket.io';
 import { RoomGateway } from 'src/room/room.gateway';
 import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
+import { DeleteMessageDto } from './dto/delete-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessageService } from './message.service';
@@ -66,6 +67,15 @@ export class MessageGateway {
       this.server
          .in(`rooms/${roomId}`)
          .emit('SERVER@MESSAGE:UPDATE', updatedMessage);
+   }
+
+   @SubscribeMessage('CLIENT@MESSAGE:DELETE')
+   async deleteMessage(@MessageBody() { roomId, messageId }: DeleteMessageDto) {
+      await this.messageService.deleteMessage(messageId);
+
+      this.server
+         .in(`rooms/${roomId}`)
+         .emit('SERVER@MESSAGE:DELETE', messageId);
    }
 
    @SubscribeMessage('CLIENT@MESSAGE:READ')

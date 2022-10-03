@@ -107,6 +107,25 @@ export class MessageService {
       }
    }
 
+   async deleteMessage(messageId: number) {
+      try {
+         const message = await this.prismaService.message.delete({
+            where: { id: messageId },
+            select: {
+               id: true,
+            },
+         });
+
+         return message.id;
+      } catch (error) {
+         if (error instanceof PrismaClientKnownRequestError) {
+            throw new WsException(error.message);
+         }
+
+         throw new WsException(error);
+      }
+   }
+
    async setMessageRead({ id, userWhoReadId }: SetMessageReadDto) {
       try {
          const message = await this.prismaService.message.update({
