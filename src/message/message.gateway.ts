@@ -6,7 +6,6 @@ import {
    WebSocketServer,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { RoomGateway } from 'src/room/room.gateway';
 import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { DeleteMessageDto } from './dto/delete-message.dto';
@@ -28,30 +27,8 @@ export class MessageGateway {
    async addMessage(@MessageBody() dto: AddMessageDto) {
       const message = await this.messageService.addMessage(dto);
 
-      const userIds = await this.messageService.getUserIdsFromRoom(dto.roomId);
-      const onlineUsers = Object.entries(RoomGateway.socketRooms)
-         .filter(([, value]) => userIds.includes(value.user.id))
-         .map(async ([key, value]) => {
-            return {
-               socketId: key,
-               userId: value.user.id,
-               countUnreadMessages:
-                  await this.roomService.countUnreadMessagesRoom(
-                     dto.roomId,
-                     value.user.id,
-                  ),
-            };
-         });
+      await this.updateSidebar(dto.roomId);
 
-      const onlineUsersAwaited = await Promise.all(onlineUsers);
-
-      onlineUsersAwaited.forEach(async (item) => {
-         const userRooms = await this.roomService.getAll(item.userId);
-
-         this.server.to(item.socketId).emit('SERVER@UPDATE-SIDEBAR', {
-            userRooms,
-         });
-      });
       this.server.in(`rooms/${dto.roomId}`).emit('SERVER@MESSAGE:ADD', message);
    }
 
@@ -64,6 +41,8 @@ export class MessageGateway {
          text,
       );
 
+      await this.updateSidebar(roomId);
+
       this.server
          .in(`rooms/${roomId}`)
          .emit('SERVER@MESSAGE:UPDATE', updatedMessage);
@@ -72,6 +51,8 @@ export class MessageGateway {
    @SubscribeMessage('CLIENT@MESSAGE:DELETE')
    async deleteMessage(@MessageBody() { roomId, messageId }: DeleteMessageDto) {
       await this.messageService.deleteMessage(messageId);
+
+      await this.updateSidebar(roomId);
 
       this.server
          .in(`rooms/${roomId}`)
@@ -100,5 +81,19 @@ export class MessageGateway {
       this.server
          .in(`rooms/${roomId}`)
          .emit('SERVER@MESSAGE:IS-TYPING', { userId, name });
+   }
+
+   async updateSidebar(roomId: number) {
+      const onlineUsers = await this.messageService.getOnlineUsersFromRoom(
+         roomId,
+      );
+
+      onlineUsers.forEach(async (item) => {
+         const userRooms = await this.roomService.getAll(item.userId);
+
+         this.server.to(item.socketId).emit('SERVER@UPDATE-SIDEBAR', {
+            userRooms,
+         });
+      });
    }
 }

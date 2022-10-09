@@ -2,13 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { PrismaService } from 'src/prisma.service';
+import { RoomGateway } from 'src/room/room.gateway';
+import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
 import { MESSAGE_ADD_ERROR } from './message.constants';
 
 @Injectable()
 export class MessageService {
-   constructor(private readonly prismaService: PrismaService) {}
+   constructor(
+      private readonly prismaService: PrismaService,
+      private readonly roomService: RoomService,
+   ) {}
 
    async addMessage({ authorId, roomId, text }: AddMessageDto) {
       if (!text) {
@@ -164,5 +169,26 @@ export class MessageService {
       });
 
       return [...room.invitedUsers.map((u) => u.id), room.authorId];
+   }
+
+   async getOnlineUsersFromRoom(roomId: number) {
+      const userIds = await this.getUserIdsFromRoom(roomId);
+      const onlineUsers = Object.entries(RoomGateway.socketRooms)
+         .filter(([, value]) => userIds.includes(value.user.id))
+         .map(async ([key, value]) => {
+            return {
+               socketId: key,
+               userId: value.user.id,
+               countUnreadMessages:
+                  await this.roomService.countUnreadMessagesRoom(
+                     roomId,
+                     value.user.id,
+                  ),
+            };
+         });
+
+      const onlineUsersAwaited = await Promise.all(onlineUsers);
+
+      return onlineUsersAwaited;
    }
 }

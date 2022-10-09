@@ -291,21 +291,6 @@ export class RoomService {
 
    // async updateOne(roomId: number, userId: number, title: string) {}
 
-   async countUnreadMessagesRoom(roomId: number, userId: number) {
-      const unreadMessagesCount = await this.prismaService.message.count({
-         where: {
-            roomId,
-            unreadUsers: {
-               some: {
-                  id: userId,
-               },
-            },
-         },
-      });
-
-      return unreadMessagesCount;
-   }
-
    generateTitle({
       authorId,
       authorName,
@@ -330,5 +315,20 @@ export class RoomService {
       }
 
       return authorName;
+   }
+
+   async countUnreadMessagesRoom(roomId: number, userId: number) {
+      const unreadMessagesCount = await this.prismaService.message.count({
+         where: {
+            roomId,
+            unreadUsers: {
+               some: {
+                  id: userId,
+               },
+            },
+         },
+      });
+
+      return unreadMessagesCount;
    }
 }
