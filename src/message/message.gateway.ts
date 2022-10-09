@@ -9,6 +9,7 @@ import { Server, Socket } from 'socket.io';
 import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { DeleteMessageDto } from './dto/delete-message.dto';
+import { ReplyMessageDto } from './dto/reply-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
 import { MessageService } from './message.service';
@@ -24,7 +25,7 @@ export class MessageGateway {
    server: Server;
 
    @SubscribeMessage('CLIENT@MESSAGE:ADD')
-   async addMessage(@MessageBody() dto: AddMessageDto) {
+   async addMessage(@MessageBody() dto: AddMessageDto | ReplyMessageDto) {
       const message = await this.messageService.addMessage(dto);
 
       await this.updateSidebar(dto.roomId);

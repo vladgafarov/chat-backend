@@ -75,6 +75,18 @@ export class RoomService {
                         id: true,
                      },
                   },
+                  replyTo: {
+                     select: {
+                        id: true,
+                        text: true,
+                        author: {
+                           select: {
+                              id: true,
+                              name: true,
+                           },
+                        },
+                     },
+                  },
                },
             },
          },

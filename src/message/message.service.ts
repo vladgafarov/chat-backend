@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma.service';
 import { RoomGateway } from 'src/room/room.gateway';
 import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
+import { ReplyMessageDto } from './dto/reply-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
 import { MESSAGE_ADD_ERROR } from './message.constants';
 
@@ -15,7 +16,12 @@ export class MessageService {
       private readonly roomService: RoomService,
    ) {}
 
-   async addMessage({ authorId, roomId, text }: AddMessageDto) {
+   async addMessage({
+      authorId,
+      roomId,
+      text,
+      repliedMessageId,
+   }: AddMessageDto & ReplyMessageDto) {
       if (!text) {
          throw new WsException(MESSAGE_ADD_ERROR);
       }
@@ -48,14 +54,11 @@ export class MessageService {
                messages: {
                   create: {
                      text,
-                     author: {
-                        connect: {
-                           id: authorId,
-                        },
-                     },
+                     authorId,
                      unreadUsers: {
                         connect: otherUsers,
                      },
+                     replyToId: repliedMessageId,
                   },
                },
             },
@@ -69,6 +72,18 @@ export class MessageService {
                      id: true,
                      text: true,
                      createdAt: true,
+                     replyTo: {
+                        select: {
+                           id: true,
+                           text: true,
+                           author: {
+                              select: {
+                                 id: true,
+                                 name: true,
+                              },
+                           },
+                        },
+                     },
                      author: {
                         select: {
                            id: true,
