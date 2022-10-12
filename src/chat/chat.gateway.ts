@@ -31,9 +31,9 @@ export class ChatGateway
 
       const { userId } = socket.handshake.auth;
 
-      if (userId) {
-         this.chatService.updateUserOnlineStatus(userId, true);
-      }
+      // if (userId) {
+      //    this.chatService.updateUserOnlineStatus(userId, true);
+      // }
    }
 
    handleDisconnect(socket: Socket) {
@@ -42,8 +42,8 @@ export class ChatGateway
 
       const { userId } = socket.handshake.auth;
 
-      if (userId) {
-         this.chatService.updateUserOnlineStatus(userId, false);
-      }
+      // if (userId) {
+      //    this.chatService.updateUserOnlineStatus(userId, false);
+      // }
    }
 }
