@@ -127,16 +127,17 @@ export class MessageService {
       }
    }
 
-   async deleteMessage(messageId: number) {
+   async deleteMessage(messageIds: number[]) {
       try {
-         const message = await this.prismaService.message.delete({
-            where: { id: messageId },
-            select: {
-               id: true,
+         const count = await this.prismaService.message.deleteMany({
+            where: {
+               id: {
+                  in: messageIds,
+               },
             },
          });
 
-         return message.id;
+         return count;
       } catch (error) {
          if (error instanceof PrismaClientKnownRequestError) {
             throw new WsException(error.message);

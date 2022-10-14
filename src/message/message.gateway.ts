@@ -50,14 +50,16 @@ export class MessageGateway {
    }
 
    @SubscribeMessage('CLIENT@MESSAGE:DELETE')
-   async deleteMessage(@MessageBody() { roomId, messageId }: DeleteMessageDto) {
-      await this.messageService.deleteMessage(messageId);
+   async deleteMessage(
+      @MessageBody() { roomId, messageIds }: DeleteMessageDto,
+   ) {
+      await this.messageService.deleteMessage(messageIds);
 
       await this.updateSidebar(roomId);
 
       this.server
          .in(`rooms/${roomId}`)
-         .emit('SERVER@MESSAGE:DELETE', messageId);
+         .emit('SERVER@MESSAGE:DELETE', messageIds);
    }
 
    @SubscribeMessage('CLIENT@MESSAGE:READ')

@@ -1,8 +1,8 @@
-import { IsNumber } from 'class-validator';
+import { IsArray, IsNumber } from 'class-validator';
 
 export class DeleteMessageDto {
-   @IsNumber()
-   messageId: number;
+   @IsArray()
+   messageIds: number[];
 
    @IsNumber()
    roomId: number;
