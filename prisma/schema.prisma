@@ -8,19 +8,22 @@ datasource db {
 }
 
 model Message {
-  id          Int       @id @default(autoincrement())
-  text        String
-  createdAt   DateTime  @default(now())
-  author      User      @relation(fields: [authorId], references: [id])
-  authorId    Int
-  room        Room      @relation(fields: [roomId], references: [id])
-  roomId      Int
-  isRead      Boolean   @default(false)
-  unreadUsers User[]    @relation("UserToUnreadMessage")
-  isEdited    Boolean   @default(false)
-  replyToId   Int?
-  replyTo     Message?  @relation("ReplyTo", fields: [replyToId], references: [id])
-  replies     Message[] @relation("ReplyTo")
+  id                Int       @id @default(autoincrement())
+  text              String
+  createdAt         DateTime  @default(now())
+  author            User      @relation(fields: [authorId], references: [id])
+  authorId          Int
+  room              Room      @relation(fields: [roomId], references: [id])
+  roomId            Int
+  isRead            Boolean   @default(false)
+  unreadUsers       User[]    @relation("UserToUnreadMessage")
+  isEdited          Boolean   @default(false)
+  replyToId         Int?
+  replyTo           Message?  @relation("ReplyTo", fields: [replyToId], references: [id])
+  replies           Message[] @relation("ReplyTo")
+  isForwarded       Boolean   @default(false)
+  forwardedMessages Message[] @relation("ForwardedMessage")
+  forwardedIn       Message[] @relation("ForwardedMessage")
 }
 
 model User {

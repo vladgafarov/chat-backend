@@ -5,6 +5,7 @@ import { PrismaService } from 'src/prisma.service';
 import { RoomGateway } from 'src/room/room.gateway';
 import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
+import { ForwardMessageDto } from './dto/forward-message.dto';
 import { ReplyMessageDto } from './dto/reply-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
 import { MESSAGE_ADD_ERROR } from './message.constants';
@@ -92,6 +93,20 @@ export class MessageService {
                            avatarUrl: true,
                         },
                      },
+                     isForwarded: true,
+                     forwardedMessages: {
+                        select: {
+                           id: true,
+                           text: true,
+                           createdAt: true,
+                           author: {
+                              select: {
+                                 id: true,
+                                 name: true,
+                              },
+                           },
+                        },
+                     },
                   },
                },
             },
@@ -162,6 +177,80 @@ export class MessageService {
          });
 
          return message;
+      } catch (error) {
+         if (error instanceof PrismaClientKnownRequestError) {
+            throw new WsException(error.message);
+         }
+
+         throw new WsException(error);
+      }
+   }
+
+   async forwardMessage({
+      messageIds,
+      roomIds,
+      text,
+      userId,
+   }: ForwardMessageDto) {
+      try {
+         const messages = await Promise.all(
+            roomIds.map((roomId) => {
+               return this.prismaService.message.create({
+                  data: {
+                     text,
+                     authorId: userId,
+                     roomId,
+                     forwardedMessages: {
+                        connect: messageIds.map((id) => ({ id })),
+                     },
+                     isForwarded: true,
+                  },
+                  select: {
+                     id: true,
+                     text: true,
+                     createdAt: true,
+                     replyTo: {
+                        select: {
+                           id: true,
+                           text: true,
+                           author: {
+                              select: {
+                                 id: true,
+                                 name: true,
+                              },
+                           },
+                        },
+                     },
+                     author: {
+                        select: {
+                           id: true,
+                           name: true,
+                           email: true,
+                           avatarUrl: true,
+                        },
+                     },
+                     isForwarded: true,
+                     forwardedMessages: {
+                        select: {
+                           id: true,
+                           text: true,
+                           createdAt: true,
+                           author: {
+                              select: {
+                                 id: true,
+                                 name: true,
+                              },
+                           },
+                        },
+                     },
+                  },
+               });
+            }),
+         );
+
+         console.log(messages[0]);
+
+         return messages[0];
       } catch (error) {
          if (error instanceof PrismaClientKnownRequestError) {
             throw new WsException(error.message);

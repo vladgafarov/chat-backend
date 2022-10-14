@@ -87,6 +87,20 @@ export class RoomService {
                         },
                      },
                   },
+                  isForwarded: true,
+                  forwardedMessages: {
+                     select: {
+                        id: true,
+                        text: true,
+                        createdAt: true,
+                        author: {
+                           select: {
+                              id: true,
+                              name: true,
+                           },
+                        },
+                     },
+                  },
                },
             },
          },

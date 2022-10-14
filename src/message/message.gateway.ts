@@ -9,6 +9,7 @@ import { Server, Socket } from 'socket.io';
 import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { DeleteMessageDto } from './dto/delete-message.dto';
+import { ForwardMessageDto } from './dto/forward-message.dto';
 import { ReplyMessageDto } from './dto/reply-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
 import { UpdateMessageDto } from './dto/update-message.dto';
@@ -84,6 +85,17 @@ export class MessageGateway {
       this.server
          .in(`rooms/${roomId}`)
          .emit('SERVER@MESSAGE:IS-TYPING', { userId, name });
+   }
+
+   @SubscribeMessage('CLIENT@MESSAGE:FORWARD')
+   async forwardMessage(@MessageBody() dto: ForwardMessageDto) {
+      const message = await this.messageService.forwardMessage(dto);
+
+      await this.updateSidebar(dto.roomId);
+
+      dto.roomIds.forEach((id) => {
+         this.server.in(`rooms/${id}`).emit('SERVER@MESSAGE:ADD', message);
+      });
    }
 
    async updateSidebar(roomId: number) {
