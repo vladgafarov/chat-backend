@@ -28,25 +28,7 @@ export class MessageService {
       }
 
       try {
-         const room = await this.prismaService.room.findUnique({
-            where: { id: roomId },
-            select: {
-               id: true,
-               authorId: true,
-               invitedUsers: {
-                  select: {
-                     id: true,
-                  },
-               },
-            },
-         });
-
-         const otherUsers = [
-            ...room.invitedUsers.map((u) => u.id),
-            room.authorId,
-         ]
-            .filter((u) => u !== authorId)
-            .map((u) => ({ id: u }));
+         const otherUsers = await this.getOtherUsersFromRoom(roomId, authorId);
 
          const roomWithLastMessage = await this.prismaService.room.update({
             where: { id: roomId },
@@ -103,6 +85,19 @@ export class MessageService {
                               select: {
                                  id: true,
                                  name: true,
+                              },
+                           },
+                           replyTo: {
+                              select: {
+                                 id: true,
+                                 text: true,
+                                 createdAt: true,
+                                 author: {
+                                    select: {
+                                       id: true,
+                                       name: true,
+                                    },
+                                 },
                               },
                            },
                         },
@@ -194,61 +189,95 @@ export class MessageService {
    }: ForwardMessageDto) {
       try {
          const messages = await Promise.all(
-            roomIds.map((roomId) => {
-               return this.prismaService.message.create({
+            roomIds.map(async (roomId) => {
+               const otherUsers = await this.getOtherUsersFromRoom(
+                  roomId,
+                  userId,
+               );
+
+               const room = await this.prismaService.room.update({
+                  where: { id: roomId },
                   data: {
-                     text,
-                     authorId: userId,
-                     roomId,
-                     forwardedMessages: {
-                        connect: messageIds.map((id) => ({ id })),
-                     },
-                     isForwarded: true,
-                  },
-                  select: {
-                     id: true,
-                     text: true,
-                     createdAt: true,
-                     replyTo: {
-                        select: {
-                           id: true,
-                           text: true,
-                           author: {
-                              select: {
-                                 id: true,
-                                 name: true,
-                              },
+                     updatedAt: new Date(),
+                     messages: {
+                        create: {
+                           text,
+                           authorId: userId,
+                           unreadUsers: {
+                              connect: otherUsers,
+                           },
+                           isForwarded: true,
+                           forwardedMessages: {
+                              connect: messageIds.map((id) => ({ id })),
                            },
                         },
                      },
-                     author: {
-                        select: {
-                           id: true,
-                           name: true,
-                           email: true,
-                           avatarUrl: true,
+                  },
+                  include: {
+                     messages: {
+                        take: 1,
+                        orderBy: {
+                           createdAt: 'desc',
                         },
-                     },
-                     isForwarded: true,
-                     forwardedMessages: {
                         select: {
                            id: true,
                            text: true,
                            createdAt: true,
+                           replyTo: {
+                              select: {
+                                 id: true,
+                                 text: true,
+                                 author: {
+                                    select: {
+                                       id: true,
+                                       name: true,
+                                    },
+                                 },
+                              },
+                           },
                            author: {
                               select: {
                                  id: true,
                                  name: true,
+                                 email: true,
+                                 avatarUrl: true,
+                              },
+                           },
+                           isForwarded: true,
+                           forwardedMessages: {
+                              select: {
+                                 id: true,
+                                 text: true,
+                                 createdAt: true,
+                                 author: {
+                                    select: {
+                                       id: true,
+                                       name: true,
+                                    },
+                                 },
+                                 replyTo: {
+                                    select: {
+                                       id: true,
+                                       text: true,
+                                       createdAt: true,
+                                       author: {
+                                          select: {
+                                             id: true,
+                                             name: true,
+                                          },
+                                       },
+                                    },
+                                 },
                               },
                            },
                         },
                      },
                   },
                });
+
+               return room.messages[0];
             }),
          );
-
-         console.log(messages[0]);
 
          return messages[0];
       } catch (error) {
@@ -295,5 +324,12 @@ export class MessageService {
       const onlineUsersAwaited = await Promise.all(onlineUsers);
 
       return onlineUsersAwaited;
+   }
+
+   async getOtherUsersFromRoom(roomId: number, userId: number) {
+      const userIds = await this.getUserIdsFromRoom(roomId);
+      const otherUsers = userIds.filter((id) => id !== userId);
+
+      return otherUsers.map((id) => ({ id }));
    }
 }

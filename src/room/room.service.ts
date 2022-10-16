@@ -99,6 +99,19 @@ export class RoomService {
                               name: true,
                            },
                         },
+                        replyTo: {
+                           select: {
+                              id: true,
+                              text: true,
+                              createdAt: true,
+                              author: {
+                                 select: {
+                                    id: true,
+                                    name: true,
+                                 },
+                              },
+                           },
+                        },
                      },
                   },
                },
