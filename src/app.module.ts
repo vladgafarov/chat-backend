@@ -6,6 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { RoomModule } from './room/room.module';
 import { MessageModule } from './message/message.module';
+import { FilesModule } from './files/files.module';
 
 @Module({
    imports: [
@@ -17,6 +18,7 @@ import { MessageModule } from './message/message.module';
       }),
       RoomModule,
       MessageModule,
+      FilesModule,
    ],
    controllers: [AppController],
 })
