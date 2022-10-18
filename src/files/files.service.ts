@@ -29,7 +29,9 @@ export class FilesService {
                name: fileName,
                size: webp.byteLength,
                mimetype: 'image/webp',
-               url: fileName,
+               url: `http://localhost:3000/static/${
+                  subfolderName ? subfolderName + '/' : ''
+               }${fileName}`,
             };
          }
 
