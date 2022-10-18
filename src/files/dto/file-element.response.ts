@@ -1,7 +1,6 @@
 export class FileElementResponse {
-   id: number;
    name: string;
    size: number;
-   type: string;
+   mimetype: string;
    url: string;
 }

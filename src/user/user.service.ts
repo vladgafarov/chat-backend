@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from '@prisma/client';
 import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { PrismaService } from 'src/prisma.service';
+import { UpdateDto } from './dto/update.dto';
 import { ALREADY_EXIST } from './user.constants';
 
 @Injectable()
@@ -41,5 +42,17 @@ export class UserService {
             password: false,
          },
       });
+   }
+
+   async updateOne(
+      id: number,
+      data: UpdateDto & { avatarUrl?: string },
+   ): Promise<User> {
+      const user = await this.prismaSerivce.user.update({
+         where: { id },
+         data,
+      });
+
+      return user;
    }
 }

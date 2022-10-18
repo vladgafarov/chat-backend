@@ -51,12 +51,4 @@ export class AppController {
       res.clearCookie('access_token');
       res.clearCookie('refresh_token');
    }
-
-   @UseGuards(JwtAuthGuard)
-   @Get('profile')
-   async getProfile(@Request() req) {
-      const user = await this.userService.findOne(req.user.id);
-
-      return user;
-   }
 }
