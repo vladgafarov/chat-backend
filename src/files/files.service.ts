@@ -41,7 +41,9 @@ export class FilesService {
             name: fileName,
             size: file.size,
             mimetype: file.mimetype,
-            url: fileName,
+            url: `http://localhost:3000/static/${
+               subfolderName ? subfolderName + '/' : ''
+            }${fileName}`,
          };
       });
 
