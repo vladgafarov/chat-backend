@@ -70,13 +70,17 @@ export class UserController {
       @UploadedFile() avatar: Express.Multer.File,
       @Body() data: UpdateDto,
    ) {
-      const uploadedAvatarUrl = (
-         await this.filesService.upload([avatar], 'avatars')
-      )[0].url;
+      let uploadedAvatarUrl: string | null = null;
+
+      if (avatar) {
+         uploadedAvatarUrl = (
+            await this.filesService.upload([avatar], 'avatars')
+         )[0].url;
+      }
 
       const user = await this.userService.updateOne(req.user.id, {
-         ...data,
          avatarUrl: uploadedAvatarUrl,
+         ...data,
       });
 
       return user;

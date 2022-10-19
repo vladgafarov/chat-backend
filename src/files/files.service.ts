@@ -17,6 +17,8 @@ export class FilesService {
       await ensureDir(uploadFolder);
 
       const res = files.map(async (file) => {
+         console.log(file);
+
          if (file.mimetype.includes('image')) {
             const fileName = `${Date.now()}-${
                file.originalname.split('.')[0]

@@ -48,6 +48,10 @@ export class UserService {
       id: number,
       data: UpdateDto & { avatarUrl?: string },
    ): Promise<User> {
+      // const user = await this.prismaSerivce.user.findUnique({
+      //    where: { id },
+      // })
+
       const user = await this.prismaSerivce.user.update({
          where: { id },
          data,
