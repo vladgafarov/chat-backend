@@ -79,7 +79,7 @@ export class UserController {
       }
 
       const user = await this.userService.updateOne(req.user.id, {
-         avatarUrl: uploadedAvatarUrl,
+         avatarUrl: uploadedAvatarUrl ?? data.avatarUrl,
          ...data,
       });
 
