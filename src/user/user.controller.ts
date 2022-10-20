@@ -1,4 +1,5 @@
 import {
+   BadRequestException,
    Body,
    Controller,
    Get,
@@ -7,19 +8,17 @@ import {
    Req,
    Request,
    UploadedFile,
-   UploadedFiles,
    UseGuards,
    UseInterceptors,
 } from '@nestjs/common';
-import {
-   FileFieldsInterceptor,
-   FileInterceptor,
-} from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { FilesService } from 'src/files/files.service';
 import { PrismaService } from 'src/prisma.service';
+import { AvatarThumbnail } from './dto/avatar-thumbnail';
 import { UpdateDto } from './dto/update.dto';
+import { INVALID_AVATAR_THUMBNAIL } from './user.constants';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -69,31 +68,35 @@ export class UserController {
 
    @UseGuards(JwtAuthGuard)
    @Post('update')
-   @UseInterceptors(
-      FileFieldsInterceptor([
-         { name: 'avatar', maxCount: 1 },
-         { name: 'avatarThumbnail', maxCount: 1 },
-      ]),
-   )
+   @UseInterceptors(FileInterceptor('avatar'))
    async updateProfile(
       @Request() req,
-      @UploadedFiles()
-      files: {
-         avatar?: Express.Multer.File;
-         avatarThumbnail?: Express.Multer.File;
-      },
+      @UploadedFile() uploadedAvatar: Express.Multer.File,
       @Body() data: UpdateDto,
    ): Promise<User> {
-      if (files.avatar && files.avatarThumbnail) {
-         const [avatar, thumbnailAvatar] = await this.filesService.upload(
-            [files.avatar],
+      if (uploadedAvatar) {
+         const avatarThumbnail = JSON.parse(
+            data.avatarThumbnail,
+         ) as AvatarThumbnail;
+         const { x, y, width, height } = avatarThumbnail;
+         if (!width || !height || !x || !y) {
+            throw new BadRequestException(INVALID_AVATAR_THUMBNAIL);
+         }
+
+         const [avatar] = await this.filesService.upload(
+            [uploadedAvatar],
             'avatars',
+         );
+
+         const avatarThumbnailUrl = await this.userService.cropImage(
+            avatarThumbnail,
+            uploadedAvatar,
          );
 
          const user = await this.userService.updateOne(req.user.id, {
             ...data,
             avatarUrl: avatar.url,
-            avatarThumbnailUrl: thumbnailAvatar.url,
+            avatarThumbnailUrl,
             avatarThumbnail: data.avatarThumbnail,
          });
 

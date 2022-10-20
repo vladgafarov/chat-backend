@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { path } from 'app-root-path';
 import { ensureDir, writeFile } from 'fs-extra';
 import * as sharp from 'sharp';
+import { AvatarThumbnail } from 'src/user/dto/avatar-thumbnail';
 import { FileElementResponse } from './dto/file-element.response';
 
 @Injectable()
@@ -17,8 +18,6 @@ export class FilesService {
       await ensureDir(uploadFolder);
 
       const res = files.map(async (file) => {
-         console.log(file);
-
          if (file.mimetype.includes('image')) {
             const fileName = `${Date.now()}-${
                file.originalname.split('.')[0]
@@ -58,5 +57,27 @@ export class FilesService {
       const webp = await sharp(buffer).webp().toBuffer();
 
       return webp;
+   }
+
+   async cropImage(
+      image: Buffer,
+      { width, height, x, y }: AvatarThumbnail,
+   ): Promise<Buffer> {
+      const result = await sharp(image)
+         .extract({ width, height, left: x, top: y })
+         .webp()
+         .toBuffer();
+
+      return result;
+   }
+
+   async resizeImage(
+      image: Buffer,
+      width: number,
+      height: number,
+   ): Promise<Buffer> {
+      const result = await sharp(image).resize(width, height).webp().toBuffer();
+
+      return result;
    }
 }
