@@ -27,17 +27,19 @@ model Message {
 }
 
 model User {
-  id             Int       @id @default(autoincrement())
-  email          String    @unique
-  password       String
-  createdAt      DateTime  @default(now())
-  name           String
-  messages       Message[]
-  createdRooms   Room[]    @relation("UserToCreatedRoom")
-  inivtedRooms   Room[]    @relation("UserToRoom")
-  online         Boolean   @default(false)
-  unreadMessages Message[] @relation("UserToUnreadMessage")
-  avatarUrl      String?
+  id                 Int       @id @default(autoincrement())
+  email              String    @unique
+  password           String
+  createdAt          DateTime  @default(now())
+  name               String
+  messages           Message[]
+  createdRooms       Room[]    @relation("UserToCreatedRoom")
+  inivtedRooms       Room[]    @relation("UserToRoom")
+  online             Boolean   @default(false)
+  unreadMessages     Message[] @relation("UserToUnreadMessage")
+  avatarUrl          String?
+  avatarThumbnailUrl String?
+  avatarThumbnail    String?
 }
 
 model Room {

@@ -7,10 +7,15 @@ import {
    Req,
    Request,
    UploadedFile,
+   UploadedFiles,
    UseGuards,
    UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import {
+   FileFieldsInterceptor,
+   FileInterceptor,
+} from '@nestjs/platform-express';
+import { User } from '@prisma/client';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { FilesService } from 'src/files/files.service';
 import { PrismaService } from 'src/prisma.service';
@@ -64,24 +69,38 @@ export class UserController {
 
    @UseGuards(JwtAuthGuard)
    @Post('update')
-   @UseInterceptors(FileInterceptor('avatar'))
+   @UseInterceptors(
+      FileFieldsInterceptor([
+         { name: 'avatar', maxCount: 1 },
+         { name: 'avatarThumbnail', maxCount: 1 },
+      ]),
+   )
    async updateProfile(
       @Request() req,
-      @UploadedFile() avatar: Express.Multer.File,
+      @UploadedFiles()
+      files: {
+         avatar?: Express.Multer.File;
+         avatarThumbnail?: Express.Multer.File;
+      },
       @Body() data: UpdateDto,
-   ) {
-      let uploadedAvatarUrl: string | null = null;
+   ): Promise<User> {
+      if (files.avatar && files.avatarThumbnail) {
+         const [avatar, thumbnailAvatar] = await this.filesService.upload(
+            [files.avatar],
+            'avatars',
+         );
 
-      if (avatar) {
-         uploadedAvatarUrl = (
-            await this.filesService.upload([avatar], 'avatars')
-         )[0].url;
+         const user = await this.userService.updateOne(req.user.id, {
+            ...data,
+            avatarUrl: avatar.url,
+            avatarThumbnailUrl: thumbnailAvatar.url,
+            avatarThumbnail: data.avatarThumbnail,
+         });
+
+         return user;
       }
 
-      const user = await this.userService.updateOne(req.user.id, {
-         avatarUrl: uploadedAvatarUrl ?? data.avatarUrl,
-         ...data,
-      });
+      const user = await this.userService.updateOne(req.user.id, data);
 
       return user;
    }

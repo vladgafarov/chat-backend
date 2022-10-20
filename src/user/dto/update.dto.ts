@@ -1,4 +1,5 @@
 import { IsOptional, IsString } from 'class-validator';
+import {} from '@nestjs/common';
 
 export class UpdateDto {
    @IsString()
@@ -12,4 +13,12 @@ export class UpdateDto {
    @IsString()
    @IsOptional()
    avatarUrl?: string;
+
+   @IsString()
+   @IsOptional()
+   avatarThumbnailUrl?: string;
+
+   @IsString()
+   @IsOptional()
+   avatarThumbnail?: string;
 }

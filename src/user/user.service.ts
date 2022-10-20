@@ -29,18 +29,9 @@ export class UserService {
       return createdUser;
    }
 
-   async findOne(id: number): Promise<Omit<User, 'password'>> {
+   async findOne(id: number): Promise<User> {
       return this.prismaSerivce.user.findUnique({
          where: { id },
-         select: {
-            id: true,
-            name: true,
-            email: true,
-            avatarUrl: true,
-            createdAt: true,
-            online: true,
-            password: false,
-         },
       });
    }
 
