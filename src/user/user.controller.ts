@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
    BadRequestException,
    Body,
@@ -74,9 +75,15 @@ export class UserController {
       @UploadedFile() uploadedAvatar: Express.Multer.File,
       @Body() data: UpdateDto,
    ): Promise<User> {
-      if (uploadedAvatar) {
+      const {
+         action,
+         avatarThumbnail: avatarThumbnailData,
+         ...updateData
+      } = data;
+
+      if (uploadedAvatar && action === 'uploadingAvatar') {
          const avatarThumbnail = JSON.parse(
-            data.avatarThumbnail,
+            avatarThumbnailData,
          ) as AvatarThumbnail;
          const { x, y, width, height } = avatarThumbnail;
          if (!width || !height || !x || !y) {
@@ -93,17 +100,41 @@ export class UserController {
             uploadedAvatar,
          );
 
+         const { action, ...restData } = data;
+
          const user = await this.userService.updateOne(req.user.id, {
-            ...data,
+            ...restData,
             avatarUrl: avatar.url,
             avatarThumbnailUrl,
-            avatarThumbnail: data.avatarThumbnail,
+            avatarThumbnail: avatarThumbnailData,
          });
 
          return user;
       }
 
-      const user = await this.userService.updateOne(req.user.id, data);
+      if (data.action === 'changeThumbnail') {
+         //! TODO: Change avatar thumbnail
+
+         const user = await this.userService.updateOne(req.user.id, {
+            ...updateData,
+            avatarThumbnail: avatarThumbnailData,
+         });
+
+         return user;
+      }
+
+      if (data.action === 'deletingAvatar') {
+         const user = await this.userService.updateOne(req.user.id, {
+            ...updateData,
+            avatarUrl: null,
+            avatarThumbnailUrl: null,
+            avatarThumbnail: null,
+         });
+
+         return user;
+      }
+
+      const user = await this.userService.updateOne(req.user.id, updateData);
 
       return user;
    }

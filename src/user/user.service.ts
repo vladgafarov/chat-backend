@@ -42,10 +42,7 @@ export class UserService {
       });
    }
 
-   async updateOne(
-      id: number,
-      data: UpdateDto & { avatarUrl?: string },
-   ): Promise<User> {
+   async updateOne(id: number, data: Partial<User>): Promise<User> {
       const user = await this.prismaSerivce.user.update({
          where: { id },
          data,
