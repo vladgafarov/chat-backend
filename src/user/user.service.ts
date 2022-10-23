@@ -6,7 +6,6 @@ import { SignUpDto } from 'src/auth/dto/signup.dto';
 import { FilesService } from 'src/files/files.service';
 import { PrismaService } from 'src/prisma.service';
 import { AvatarThumbnail } from './dto/avatar-thumbnail';
-import { UpdateDto } from './dto/update.dto';
 import { ALREADY_EXIST } from './user.constants';
 
 @Injectable()
@@ -64,7 +63,36 @@ export class UserService {
 
       const uploadFolder = `${path}/uploads/avatars`;
       await ensureDir(uploadFolder);
-      const fileName = `${Date.now()}-${image.originalname.split('.')[0]}.webp`;
+      const fileName = `${Date.now()}-${
+         image.originalname.split('.')[0]
+      }_96.webp`;
+      await writeFile(`${uploadFolder}/${fileName}`, resizedImage);
+
+      return `http://localhost:3000/static/avatars/${fileName}`;
+   }
+
+   async updateThumbnail(
+      avatarUrl: string,
+      avatarThumbnail: AvatarThumbnail,
+   ): Promise<string> {
+      const image = await this.filesService.fetchImage(avatarUrl);
+
+      const cropedImage = await this.filesService.cropImage(
+         image,
+         avatarThumbnail,
+      );
+      const resizedImage = await this.filesService.resizeImage(
+         cropedImage,
+         96,
+         96,
+      );
+
+      const uploadFolder = `${path}/uploads/avatars`;
+      await ensureDir(uploadFolder);
+
+      const fileName = `${Date.now()}-${
+         avatarUrl.split('/')[avatarUrl.split('/').length - 1]
+      }`;
       await writeFile(`${uploadFolder}/${fileName}`, resizedImage);
 
       return `http://localhost:3000/static/avatars/${fileName}`;

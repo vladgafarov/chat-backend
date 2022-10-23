@@ -12,11 +12,13 @@ export class UpdateDto {
 
    @IsString()
    @IsOptional()
-   avatarThumbnail?: string;
+   avatarUrl?: string;
 
-   action?:
-      | 'initial'
-      | 'uploadingAvatar'
-      | 'deletingAvatar'
-      | 'changeThumbnail';
+   @IsString()
+   @IsOptional()
+   avatarThumbnailUrl?: string;
+
+   @IsString()
+   @IsOptional()
+   avatarThumbnail?: string;
 }

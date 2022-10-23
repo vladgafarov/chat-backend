@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { path } from 'app-root-path';
 import { ensureDir, writeFile } from 'fs-extra';
+import fetch from 'node-fetch';
 import * as sharp from 'sharp';
 import { AvatarThumbnail } from 'src/user/dto/avatar-thumbnail';
 import { FileElementResponse } from './dto/file-element.response';
@@ -79,5 +80,12 @@ export class FilesService {
       const result = await sharp(image).resize(width, height).webp().toBuffer();
 
       return result;
+   }
+
+   async fetchImage(url: string): Promise<Buffer> {
+      const res = await fetch(url);
+      const buffer = await res.body.pipe(sharp()).webp().toBuffer();
+
+      return buffer;
    }
 }

@@ -19,7 +19,10 @@ import { FilesService } from 'src/files/files.service';
 import { PrismaService } from 'src/prisma.service';
 import { AvatarThumbnail } from './dto/avatar-thumbnail';
 import { UpdateDto } from './dto/update.dto';
-import { INVALID_AVATAR_THUMBNAIL } from './user.constants';
+import {
+   AVATAR_URL_NOT_PROVIDED,
+   INVALID_AVATAR_THUMBNAIL,
+} from './user.constants';
 import { UserService } from './user.service';
 
 @Controller('user')
@@ -75,21 +78,23 @@ export class UserController {
       @UploadedFile() uploadedAvatar: Express.Multer.File,
       @Body() data: UpdateDto,
    ): Promise<User> {
-      const {
-         action,
-         avatarThumbnail: avatarThumbnailData,
-         ...updateData
-      } = data;
+      const avatarThumbnail = data.avatarThumbnail
+         ? (JSON.parse(data.avatarThumbnail) as AvatarThumbnail)
+         : null;
 
-      if (uploadedAvatar && action === 'uploadingAvatar') {
-         const avatarThumbnail = JSON.parse(
-            avatarThumbnailData,
-         ) as AvatarThumbnail;
+      if (avatarThumbnail) {
          const { x, y, width, height } = avatarThumbnail;
-         if (!width || !height || !x || !y) {
+         if (
+            width === undefined ||
+            height === undefined ||
+            x === undefined ||
+            y === undefined
+         ) {
             throw new BadRequestException(INVALID_AVATAR_THUMBNAIL);
          }
+      }
 
+      if (uploadedAvatar && !data.avatarUrl) {
          const [avatar] = await this.filesService.upload(
             [uploadedAvatar],
             'avatars',
@@ -100,41 +105,36 @@ export class UserController {
             uploadedAvatar,
          );
 
-         const { action, ...restData } = data;
-
          const user = await this.userService.updateOne(req.user.id, {
-            ...restData,
+            ...data,
             avatarUrl: avatar.url,
             avatarThumbnailUrl,
-            avatarThumbnail: avatarThumbnailData,
+            avatarThumbnail: data.avatarThumbnail,
          });
 
          return user;
       }
 
-      if (data.action === 'changeThumbnail') {
-         //! TODO: Change avatar thumbnail
+      if (avatarThumbnail) {
+         if (!data.avatarUrl) {
+            throw new BadRequestException(AVATAR_URL_NOT_PROVIDED);
+         }
+
+         const newAvatarThumbnailUrl = await this.userService.updateThumbnail(
+            data.avatarUrl,
+            avatarThumbnail,
+         );
 
          const user = await this.userService.updateOne(req.user.id, {
-            ...updateData,
-            avatarThumbnail: avatarThumbnailData,
+            ...data,
+            avatarThumbnailUrl: newAvatarThumbnailUrl,
+            avatarThumbnail: data.avatarThumbnail,
          });
 
          return user;
       }
 
-      if (data.action === 'deletingAvatar') {
-         const user = await this.userService.updateOne(req.user.id, {
-            ...updateData,
-            avatarUrl: null,
-            avatarThumbnailUrl: null,
-            avatarThumbnail: null,
-         });
-
-         return user;
-      }
-
-      const user = await this.userService.updateOne(req.user.id, updateData);
+      const user = await this.userService.updateOne(req.user.id, data);
 
       return user;
    }
