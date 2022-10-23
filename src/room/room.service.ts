@@ -45,7 +45,7 @@ export class RoomService {
             invitedUsers: {
                select: {
                   id: true,
-                  avatarUrl: true,
+                  avatarThumbnailUrl: true,
                   email: true,
                   name: true,
                   online: true,
@@ -64,6 +64,7 @@ export class RoomService {
                         name: true,
                         email: true,
                         avatarUrl: true,
+                        avatarThumbnailUrl: true,
                         online: true,
                      },
                   },
@@ -272,6 +273,7 @@ export class RoomService {
                   email: true,
                   name: true,
                   online: true,
+                  avatarThumbnailUrl: true,
                },
             },
             invitedUsers: {
@@ -281,6 +283,7 @@ export class RoomService {
                   name: true,
                   email: true,
                   online: true,
+                  avatarThumbnailUrl: true,
                },
             },
             messages: {
@@ -316,12 +319,27 @@ export class RoomService {
             title: room.title,
             userId,
          });
+         const isCurrentUserAuthor = room.author.id === userId;
+
+         if (!room.isGroupChat) {
+            const image = isCurrentUserAuthor
+               ? room.invitedUsers[0]?.avatarThumbnailUrl
+               : room.author.avatarThumbnailUrl;
+
+            return {
+               ...room,
+               countUnreadMessages,
+               title,
+               isCurrentUserAuthor,
+               image,
+            };
+         }
 
          return {
             ...room,
             countUnreadMessages,
             title,
-            isCurrentUserAuthor: room.author.id === userId,
+            isCurrentUserAuthor,
          };
       });
 
