@@ -3,6 +3,7 @@ import {
    Injectable,
    NotFoundException,
 } from '@nestjs/common';
+import { Room } from '@prisma/client';
 import { PrismaService } from 'src/prisma.service';
 import {
    CHAT_WITH_USER_EXISTS,
@@ -135,19 +136,20 @@ export class RoomService {
          };
       });
 
-      const title = this.generateTitle({
-         authorId: room.author.id,
-         authorName: room.author.name,
-         invitedUserName: room.invitedUsers[0]?.name,
-         title: room.title,
-         userId,
-      });
+      const title = !room.isGroupChat
+         ? this.generateTitle({
+              authorId: room.author.id,
+              authorName: room.author.name,
+              invitedUserName: room.invitedUsers[0]?.name,
+              userId,
+           })
+         : room.title;
 
       return {
          ...room,
          messages,
          title,
-         isCurrentUserAuthor: room.author.id === userId,
+         isCurrentUserAuthor: room?.author?.id === userId,
       };
    }
 
@@ -223,28 +225,63 @@ export class RoomService {
       }
    }
 
-   async deleteMany(roomIds: number[], userId: number) {
+   async leave(roomId: number, userId: number): Promise<Room> {
       try {
-         const deletedRoomsCount = await this.prismaService.room.deleteMany({
+         const room = await this.prismaService.room.findFirst({
             where: {
-               AND: [
-                  {
-                     id: {
-                        in: roomIds,
-                     },
-                  },
-                  { authorId: userId },
-               ],
+               id: roomId,
+            },
+            include: {
+               invitedUsers: true,
             },
          });
 
-         if (!deletedRoomsCount) {
+         if (!room) {
             throw new NotFoundException(NOT_FOUND);
          }
 
-         return deletedRoomsCount;
+         const isUserInRoom =
+            room?.invitedUsers.some((user) => user.id === userId) ||
+            room?.authorId === userId;
+
+         if (!isUserInRoom) {
+            throw new NotFoundException(NOT_FOUND);
+         }
+
+         const isUserAuthor = room.authorId === userId;
+         const isGroupChat = room.isGroupChat;
+
+         if (isGroupChat) {
+            const updatedRoom = await this.prismaService.room.update({
+               where: {
+                  id: roomId,
+               },
+               data: {
+                  author: {
+                     disconnect: isUserAuthor ? true : false,
+                  },
+                  invitedUsers: {
+                     disconnect: {
+                        id: userId,
+                     },
+                  },
+               },
+            });
+
+            return updatedRoom;
+         }
+
+         const deletedRoom = await this.prismaService.room.delete({
+            where: {
+               id: roomId,
+            },
+         });
+
+         return deletedRoom;
       } catch (error) {
-         throw new NotFoundException(NOT_FOUND);
+         console.log(error);
+
+         throw new BadRequestException(error.message);
       }
    }
 
@@ -313,19 +350,18 @@ export class RoomService {
             userId,
          );
 
-         const title = this.generateTitle({
-            authorId: room.author.id,
-            authorName: room.author.name,
-            invitedUserName: room.invitedUsers[0]?.name,
-            title: room.title,
-            userId,
-         });
-         const isCurrentUserAuthor = room.author.id === userId;
+         const isCurrentUserAuthor = room?.author?.id === userId;
 
          if (!room.isGroupChat) {
             const image = isCurrentUserAuthor
                ? room.invitedUsers[0]?.avatarThumbnailUrl
                : room.author.avatarThumbnailUrl;
+            const title = this.generateTitle({
+               authorId: room.author.id,
+               authorName: room.author.name,
+               invitedUserName: room.invitedUsers[0]?.name,
+               userId,
+            });
 
             return {
                ...room,
@@ -339,7 +375,7 @@ export class RoomService {
          return {
             ...room,
             countUnreadMessages,
-            title,
+            title: room.title,
             isCurrentUserAuthor,
          };
       });
@@ -353,19 +389,13 @@ export class RoomService {
       authorId,
       authorName,
       invitedUserName,
-      title,
       userId,
    }: {
       authorId: number;
       authorName: string;
       userId: number;
       invitedUserName: string;
-      title: string;
    }): string {
-      if (title) {
-         return title;
-      }
-
       const isUserAuthor = authorId === userId;
 
       if (isUserAuthor) {

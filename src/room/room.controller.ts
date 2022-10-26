@@ -1,7 +1,6 @@
 import {
    Body,
    Controller,
-   Delete,
    Get,
    Param,
    Post,
@@ -12,7 +11,7 @@ import { Request } from 'express';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { UserPayload } from 'src/common/types/UserPayload';
 import { CreateRoomDto } from './dto/create-room.dto';
-import { DeleteRoomDto } from './dto/delete-room.dto';
+import { LeaveRoomDto } from './dto/leave-room.dto';
 import { RoomService } from './room.service';
 
 @Controller('rooms')
@@ -34,14 +33,14 @@ export class RoomController {
       return room;
    }
 
-   @Delete()
+   @Post('leave')
    @UseGuards(JwtAuthGuard)
-   async delete(@Body() dto: DeleteRoomDto, @Req() req: Request) {
+   async delete(@Body() dto: LeaveRoomDto, @Req() req: Request) {
       const userId = (req.user as UserPayload).id;
 
-      const count = await this.roomService.deleteMany(dto.ids, userId);
+      const room = await this.roomService.leave(dto.id, userId);
 
-      return count;
+      return room;
    }
 
    @Get()

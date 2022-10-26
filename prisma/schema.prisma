@@ -13,8 +13,8 @@ model Message {
   createdAt         DateTime  @default(now())
   author            User      @relation(fields: [authorId], references: [id])
   authorId          Int
-  room              Room      @relation(fields: [roomId], references: [id])
-  roomId            Int
+  room              Room?     @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  roomId            Int?
   isRead            Boolean   @default(false)
   unreadUsers       User[]    @relation("UserToUnreadMessage")
   isEdited          Boolean   @default(false)
@@ -47,8 +47,8 @@ model Room {
   title        String
   messages     Message[]
   isGroupChat  Boolean
-  author       User      @relation(name: "UserToCreatedRoom", fields: [authorId], references: [id])
-  authorId     Int
+  author       User?     @relation(name: "UserToCreatedRoom", fields: [authorId], references: [id])
+  authorId     Int?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   invitedUsers User[]    @relation(name: "UserToRoom")
