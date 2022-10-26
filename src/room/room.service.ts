@@ -40,15 +40,16 @@ export class RoomService {
                   email: true,
                   name: true,
                   online: true,
+                  avatarThumbnailUrl: true,
                },
             },
             invitedUsers: {
                select: {
                   id: true,
-                  avatarThumbnailUrl: true,
                   email: true,
                   name: true,
                   online: true,
+                  avatarThumbnailUrl: true,
                },
             },
             messages: {
