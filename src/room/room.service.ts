@@ -258,7 +258,7 @@ export class RoomService {
                },
                data: {
                   author: {
-                     disconnect: isUserAuthor ? true : false,
+                     disconnect: isUserAuthor ? true : undefined,
                   },
                   invitedUsers: {
                      disconnect: {
