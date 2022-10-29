@@ -1,3 +1,4 @@
+import { OnEvent } from '@nestjs/event-emitter';
 import {
    ConnectedSocket,
    MessageBody,
@@ -5,6 +6,7 @@ import {
    WebSocketGateway,
    WebSocketServer,
 } from '@nestjs/websockets';
+import { Message } from '@prisma/client';
 import { Server, Socket } from 'socket.io';
 import { RoomService } from 'src/room/room.service';
 import { DeleteMessageDto } from './dto/delete-message.dto';
@@ -23,14 +25,14 @@ export class MessageGateway {
    @WebSocketServer()
    server: Server;
 
-   // @SubscribeMessage('CLIENT@MESSAGE:ADD')
-   // async addMessage(@MessageBody() dto: AddMessageDto | ReplyMessageDto) {
-   //    const message = await this.messageService.addMessage(2, dto);
+   @OnEvent('message.add')
+   async addMessage(message: Message) {
+      await this.updateSidebar(message.roomId);
 
-   //    await this.updateSidebar(dto.roomId);
-
-   //    this.server.in(`rooms/${dto.roomId}`).emit('SERVER@MESSAGE:ADD', message);
-   // }
+      this.server
+         .in(`rooms/${message.roomId}`)
+         .emit('SERVER@MESSAGE:ADD', message);
+   }
 
    @SubscribeMessage('CLIENT@MESSAGE:UPDATE')
    async updateMessage(
