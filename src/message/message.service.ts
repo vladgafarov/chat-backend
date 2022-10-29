@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
+import { Message } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+import { FilesService } from 'src/files/files.service';
 import { PrismaService } from 'src/prisma.service';
 import { RoomGateway } from 'src/room/room.gateway';
 import { RoomService } from 'src/room/room.service';
@@ -15,14 +17,13 @@ export class MessageService {
    constructor(
       private readonly prismaService: PrismaService,
       private readonly roomService: RoomService,
+      private readonly filesService: FilesService,
    ) {}
 
-   async addMessage({
-      authorId,
-      roomId,
-      text,
-      repliedMessageId,
-   }: AddMessageDto & ReplyMessageDto) {
+   async addMessage(
+      authorId: number,
+      { roomId, text, repliedMessageId }: AddMessageDto & ReplyMessageDto,
+   ): Promise<Message> {
       if (!text) {
          throw new WsException(MESSAGE_ADD_ERROR);
       }
@@ -30,76 +31,25 @@ export class MessageService {
       try {
          const otherUsers = await this.getOtherUsersFromRoom(roomId, authorId);
 
-         const roomWithLastMessage = await this.prismaService.room.update({
-            where: { id: roomId },
+         const message = await this.prismaService.message.create({
             data: {
-               updatedAt: new Date(),
-               messages: {
-                  create: {
-                     text,
-                     authorId,
-                     unreadUsers: {
-                        connect: otherUsers,
-                     },
-                     replyToId: repliedMessageId,
-                  },
+               text,
+               authorId,
+               unreadUsers: {
+                  connect: otherUsers,
                },
+               replyToId: repliedMessageId,
+               roomId,
             },
             include: {
-               messages: {
-                  take: 1,
-                  orderBy: {
-                     createdAt: 'desc',
-                  },
-                  select: {
-                     id: true,
-                     text: true,
-                     createdAt: true,
+               author: true,
+               replyTo: true,
+               forwardedMessages: {
+                  include: {
+                     author: true,
                      replyTo: {
-                        select: {
-                           id: true,
-                           text: true,
-                           author: {
-                              select: {
-                                 id: true,
-                                 name: true,
-                              },
-                           },
-                        },
-                     },
-                     author: {
-                        select: {
-                           id: true,
-                           name: true,
-                           email: true,
-                           avatarUrl: true,
-                        },
-                     },
-                     isForwarded: true,
-                     forwardedMessages: {
-                        select: {
-                           id: true,
-                           text: true,
-                           createdAt: true,
-                           author: {
-                              select: {
-                                 id: true,
-                                 name: true,
-                              },
-                           },
-                           replyTo: {
-                              select: {
-                                 id: true,
-                                 text: true,
-                                 createdAt: true,
-                                 author: {
-                                    select: {
-                                       id: true,
-                                       name: true,
-                                    },
-                                 },
-                              },
-                           },
+                        include: {
+                           author: true,
                         },
                      },
                   },
@@ -107,7 +57,7 @@ export class MessageService {
             },
          });
 
-         return roomWithLastMessage.messages[0];
+         return message;
       } catch (error) {
          if (error instanceof PrismaClientKnownRequestError) {
             throw new WsException(error.message);

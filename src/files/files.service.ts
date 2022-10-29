@@ -3,14 +3,18 @@ import { path } from 'app-root-path';
 import { ensureDir, writeFile } from 'fs-extra';
 import fetch from 'node-fetch';
 import * as sharp from 'sharp';
+import { PrismaService } from 'src/prisma.service';
 import { AvatarThumbnail } from 'src/user/dto/avatar-thumbnail';
 import { FileElementResponse } from './dto/file-element.response';
 
 @Injectable()
 export class FilesService {
+   constructor(private readonly prismaService: PrismaService) {}
+
    async upload(
       files: Express.Multer.File[],
       subfolderName?: string,
+      messageId?: number,
    ): Promise<FileElementResponse[]> {
       const uploadFolder = `${path}/uploads/${
          subfolderName ? subfolderName : ''
@@ -38,16 +42,26 @@ export class FilesService {
          }
 
          const fileName = `${Date.now()}-${file.originalname}`;
+         const fileUrl = `http://localhost:3000/static/${
+            subfolderName ? subfolderName + '/' : ''
+         }${fileName}`;
+         const fileDb = await this.prismaService.file.create({
+            data: {
+               name: fileName,
+               size: file.size,
+               mimetype: file.mimetype,
+               url: fileUrl,
+               messageId,
+            },
+         });
 
          await writeFile(`${uploadFolder}/${fileName}`, file.buffer);
 
          return {
-            name: fileName,
-            size: file.size,
-            mimetype: file.mimetype,
-            url: `http://localhost:3000/static/${
-               subfolderName ? subfolderName + '/' : ''
-            }${fileName}`,
+            name: fileDb.name,
+            size: fileDb.size,
+            mimetype: fileDb.mimetype,
+            url: fileDb.url,
          };
       });
 

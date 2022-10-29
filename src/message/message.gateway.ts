@@ -27,7 +27,7 @@ export class MessageGateway {
 
    @SubscribeMessage('CLIENT@MESSAGE:ADD')
    async addMessage(@MessageBody() dto: AddMessageDto | ReplyMessageDto) {
-      const message = await this.messageService.addMessage(dto);
+      const message = await this.messageService.addMessage(2, dto);
 
       await this.updateSidebar(dto.roomId);
 
