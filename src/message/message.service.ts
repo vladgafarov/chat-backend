@@ -1,14 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 import { Message } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
-import { FilesService } from 'src/files/files.service';
 import { PrismaService } from 'src/prisma.service';
 import { RoomGateway } from 'src/room/room.gateway';
 import { RoomService } from 'src/room/room.service';
 import { AddMessageDto } from './dto/add-message.dto';
 import { ForwardMessageDto } from './dto/forward-message.dto';
-import { ReplyMessageDto } from './dto/reply-message.dto';
 import { SetMessageReadDto } from './dto/set-message-red.dto';
 import { MESSAGE_ADD_ERROR } from './message.constants';
 
@@ -17,19 +15,19 @@ export class MessageService {
    constructor(
       private readonly prismaService: PrismaService,
       private readonly roomService: RoomService,
-      private readonly filesService: FilesService,
    ) {}
 
    async addMessage(
       authorId: number,
-      { roomId, text, repliedMessageId }: AddMessageDto & ReplyMessageDto,
+      { roomId, text, repliedMessageId }: AddMessageDto,
+      filesIds?: { id: string }[],
    ): Promise<Message> {
-      if (!text) {
-         throw new WsException(MESSAGE_ADD_ERROR);
+      if (!text || !roomId) {
+         throw new BadRequestException(MESSAGE_ADD_ERROR);
       }
 
       try {
-         const otherUsers = await this.getOtherUsersFromRoom(roomId, authorId);
+         const otherUsers = await this.getOtherUsersFromRoom(+roomId, authorId);
 
          const message = await this.prismaService.message.create({
             data: {
@@ -38,8 +36,11 @@ export class MessageService {
                unreadUsers: {
                   connect: otherUsers,
                },
-               replyToId: repliedMessageId,
-               roomId,
+               replyToId: repliedMessageId ? +repliedMessageId : undefined,
+               roomId: +roomId,
+               files: {
+                  connect: filesIds,
+               },
             },
             include: {
                author: true,
@@ -60,10 +61,10 @@ export class MessageService {
          return message;
       } catch (error) {
          if (error instanceof PrismaClientKnownRequestError) {
-            throw new WsException(error.message);
+            throw new BadRequestException(error.message);
          }
 
-         throw new WsException(MESSAGE_ADD_ERROR);
+         throw new BadRequestException(MESSAGE_ADD_ERROR);
       }
    }
 

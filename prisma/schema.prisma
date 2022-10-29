@@ -62,6 +62,6 @@ model File {
   size      Int
   mimetype  String
   createdAt DateTime @default(now())
-  message   Message  @relation(fields: [messageId], references: [id])
-  messageId Int
+  message   Message? @relation(fields: [messageId], references: [id])
+  messageId Int?
 }
