@@ -22,7 +22,7 @@ export class MessageService {
       { roomId, text, repliedMessageId }: AddMessageDto,
       filesIds?: { id: string }[],
    ): Promise<Message> {
-      if (!text || !roomId) {
+      if (!roomId || (!text && filesIds?.length === 0)) {
          throw new BadRequestException(MESSAGE_ADD_ERROR);
       }
 
@@ -44,7 +44,11 @@ export class MessageService {
             },
             include: {
                author: true,
-               replyTo: true,
+               replyTo: {
+                  include: {
+                     author: true,
+                  },
+               },
                forwardedMessages: {
                   include: {
                      author: true,
@@ -55,6 +59,7 @@ export class MessageService {
                      },
                   },
                },
+               files: true,
             },
          });
 

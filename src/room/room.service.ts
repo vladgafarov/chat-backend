@@ -117,6 +117,16 @@ export class RoomService {
                         },
                      },
                   },
+                  files: {
+                     select: {
+                        id: true,
+                        name: true,
+                        url: true,
+                        size: true,
+                        mimetype: true,
+                        createdAt: true,
+                     },
+                  },
                },
             },
          },
@@ -279,8 +289,6 @@ export class RoomService {
 
          return deletedRoom;
       } catch (error) {
-         console.log(error);
-
          throw new BadRequestException(error.message);
       }
    }

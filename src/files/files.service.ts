@@ -36,13 +36,6 @@ export class FilesService {
 
          await writeFile(`${uploadFolder}/${fileName}`, fileBuffer);
 
-         console.log({
-            name: fileName,
-            size: file.size,
-            mimetype: file.mimetype,
-            url: fileUrl,
-         });
-
          const fileDb = await this.prismaService.file.create({
             data: {
                name: fileName,

@@ -31,6 +31,8 @@ export class MessageController {
       @Body() dto: AddMessageDto,
       @Request() req,
    ) {
+      console.log(dto);
+
       const user = req.user as UserPayload;
 
       let filesIds: { id: string }[] = undefined;
